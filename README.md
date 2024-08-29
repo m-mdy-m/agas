@@ -14,7 +14,7 @@ Agas is a command-line tool for sending HTTP requests directly from your termina
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/agas.git
+   git clone https://github.com/m-mdy-m/agas.git
    cd agas
    ```
 
@@ -116,4 +116,4 @@ If you have suggestions or improvements for `Agas`, feel free to open an issue o
 
 ## Contact
 
-For any questions or support, please contact [your email address] or open an issue on the [GitHub repository](https://github.com/yourusername/agas).
+For any questions or support, please contact [your email address] or open an issue on the [GitHub repository](https://github.com/m-mdy-m/agas).

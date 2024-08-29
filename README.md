@@ -113,7 +113,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Contributing
 
 If you have suggestions or improvements for `Agas`, feel free to open an issue or submit a pull request on GitHub.
-
-## Contact
-
-For any questions or support, please contact [your email address] or open an issue on the [GitHub repository](https://github.com/m-mdy-m/agas).

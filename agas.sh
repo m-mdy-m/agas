@@ -42,6 +42,8 @@ function send_request() {
     else
         curl -X "$method" "${headers[@]}" "$url"
     fi
+    # Print a newline after the response
+    echo
 }
 method=""
 case $1 in

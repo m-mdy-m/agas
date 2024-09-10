@@ -52,7 +52,6 @@ case $1 in
     @put) method="PUT" ;;
     @delete) method="DELETE" ;;
     @patch) method="PATCH" ;;
-    @all) method="POST" ;;  # Used for GraphQL or multi-purpose POST
     *) echo "Unknown method: $1"; exit 1 ;;
 esac
 

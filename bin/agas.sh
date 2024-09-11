@@ -1,9 +1,168 @@
 #!/bin/bash
+function type_effect() {
+    local text="$1"
+    local delay=0.05  
 
-# Preset file to save/load requests
-PRESETS_FILE="./presets.json"
+    for (( i=0; i<${#text}; i++ )); do
+        echo -n "${text:$i:1}"
+        sleep $delay
+    done
+    echo ""
+}
 
-# Function to send an HTTP request
+function display_intro() {
+    local intro_file="$HOME/.agas_intro_shown"
+    if [[ ! -f "$intro_file" ]]; then
+        # Simulate a typing effect with a fun, anime-like intro
+        echo -e "\033[1;32m"
+        type_effect "============================="
+        type_effect "|                           |"
+        type_effect "|   ~ Welcome to Agas! ~    |"
+        type_effect "|                           |"
+        type_effect "============================="
+        type_effect "Initiating... Please wait while we pretend to care."
+        sleep 1  # Pause for dramatic effect
+        
+        echo -e "\033[1;33m"
+        cat << 'EOF'
+         ._                __.
+        / \"-.          ,-",'/ 
+       (   \ ,"--.__.--".,' /  
+       =---Y(_i.-'  |-.i_)---=
+      f ,  "..'/\\v/|/|/\  , l
+      l//  ,'|/   V / /||  \\j
+       "--; / db     db|/---"
+          | \ YY   , YY//
+          '.\>_   (_),"' __
+        .-"    "-.-." I,"  `.
+        \.-""-. ( , ) ( \   |
+        (     l  `"'  -'-._j 
+ __,---_ '._." .  .    \
+(__.--_-'.  ,  :  '  \  '-.
+    ,' .'  /   |   \  \  \ "-
+     "--.._____t____.--'-""'
+            /  /  `. ".
+           / ":     \' '.
+         .'  (       \   : 
+         |    l      j    "-.
+         l_;_;I      l____;_I
+EOF
+        echo -e "\033[0m"
+
+        sleep 1
+        echo -e "\033[1;31m" 
+        type_effect "Welcome to Agas, where your incompetence meets its reckoning!"
+        type_effect "Agas will handle your HTTP requests... because clearly, you can't."
+        sleep 0.5
+        echo -e "\033[0m" 
+
+        echo -e "\033[1;32m"
+        type_effect "Agas is here to do the dirty work for you, because let's face it..."
+        type_effect "You’re barely holding this whole 'coding' thing together."
+        sleep 0.5
+        echo -e "\033[1;32m"
+
+        type_effect "So, sit back, rookie. Watch Agas destroy your pitiful excuses for HTTP requests."
+        type_effect "Maybe, just maybe, you'll learn something useful for once."
+        echo -e "\033[0m"
+        echo
+        touch "$intro_file"
+    fi
+}
+function formatoutput() {
+    local method=$1
+    local url=$2
+    local headers=("${!3}")
+    local data=$4
+    local response_body=$5
+    local response_headers=$6
+    local status_code=$7
+    local size=$8
+    local time=$9
+    local output_format=${10}
+    local verbose=${11}
+
+    # Define colors
+    local COLOR_HEADER="\033[1;34m"  # Blue
+    local COLOR_BODY="\033[0;32m"    # Green
+    local COLOR_STATUS="\033[1;33m"  # Yellow
+    local COLOR_RESET="\033[0m"      # Reset
+
+    # Prepare headers for display
+    local display_headers=()
+    for ((i = 0; i < ${#headers[@]}; i+=2)); do
+        display_headers+=("${headers[i+1]}")
+    done
+
+    # Display request details
+    echo -e "${BLOCK}──────────────────────────────────${COLOR_RESET}"
+    echo -e "${COLOR_HEADER} REQUEST DETAILS ${COLOR_RESET}"
+    echo -e "${COLOR_BODY}Method:         ${method}${COLOR_RESET}"
+    echo -e "${COLOR_BODY}URL:            ${url}${COLOR_RESET}"
+    echo -e "${COLOR_BODY}Headers:        ${display_headers[@]}${COLOR_RESET}"
+    echo -e "${COLOR_BODY}Data:           ${data}${COLOR_RESET}"
+    echo
+    if [[ $verbose == true ]]; then
+        echo -e "${BLOCK}───────────────────────────────────────────────────────────────${COLOR_RESET}"
+        echo -e "${COLOR_HEADER} VERBOSE OUTPUT ${COLOR_RESET}"
+        echo -e "${BLOCK}───────────────────────────────────────────────────────────────${COLOR_RESET}"
+        echo -e "${COLOR_BODY}Executing curl command: ${curl_command[@]}${COLOR_RESET}"
+    fi
+
+    # Display response details
+    echo -e "${BLOCK}──────────────────────────────────${COLOR_RESET}"
+    echo -e "${COLOR_HEADER} RESPONSE DETAILS ${COLOR_RESET}"
+    echo -e "${COLOR_STATUS}Status Code:    ${status_code}${COLOR_RESET}"
+    echo -e "${COLOR_STATUS}Size:           ${size} bytes${COLOR_RESET}"
+    echo -e "${COLOR_STATUS}Time:           ${time} seconds${COLOR_RESET}"
+    echo
+
+    # Format response body
+    echo -e "${BLOCK}──────────────────────────────────${COLOR_RESET}"
+    echo -e "${COLOR_HEADER} RESPONSE BODY ${COLOR_RESET}"
+    case $output_format in
+        jq)
+            echo "$response_body" | jq
+            ;;
+        raw)
+            echo "$response_body"
+            ;;
+        *)
+            echo "$response_body"
+            ;;
+    esac
+
+    echo -e "${BLOCK}──────────────────────────────────${COLOR_RESET}"
+}
+function extract() {
+    local curl_command=("$@")
+    
+    # Temporary files for headers and body
+    local header_file=$(mktemp)
+    local body_file=$(mktemp)
+    local output_file=$(mktemp)
+
+    # Execute curl command
+    curl -L -X "${curl_command[@]}" \
+         -o "$body_file" \
+         -D "$header_file" \
+         -w "HTTP Code: %{http_code}\nSize: %{size_download} bytes\nTime: %{time_total}\n" \
+         --silent \
+         > "$output_file"
+
+    # Extract response body
+    local response_body=$(cat "$body_file")
+    local response_headers=$(cat "$header_file")
+    local status_code=$(grep "HTTP Code:" "$output_file" | awk '{print $3}')
+    local size=$(grep "Size:" "$output_file" | awk '{print $2}')
+    local time=$(grep "Time:" "$output_file" | awk '{print $2}')
+    # Clean up temporary files
+    rm "$header_file" "$body_file" "$output_file"
+    # Call formatoutput with the extracted information
+    formatoutput "$method" "$url" headers[@] "$data" "$response_body" "$response_headers" "$status_code" "$size" "$time" "$output_format" "$verbose"
+}
+
+
 function send_request() {
     local method=$1
     local url=$2
@@ -11,10 +170,8 @@ function send_request() {
     local data=""
     local verbose=false
     local silent=false
-    local save=false
-    local preset=""
     local output_format=""
-    
+
     shift 2
 
     # Parse additional options
@@ -45,16 +202,7 @@ function send_request() {
                 silent=true
                 shift 1
                 ;;
-            --preset)
-                preset="$2"
-                load_preset "$preset"
-                shift 2
-                ;;
-            --save)
-                save=true
-                shift 1
-                ;;
-            --format)
+             --format)
                 output_format="$2"
                 shift 2
                 ;;
@@ -64,72 +212,29 @@ function send_request() {
                 ;;
         esac
     done
-
-    # Construct the curl command
-    local curl_command=("curl" "-X" "$method" "${headers[@]}" "$url")
+     # Construct the curl command
+    local curl_command=("curl" "-X" "$method" "$url")
     
+    # Add headers if available
+    if [[ ${#headers[@]} -gt 0 ]]; then
+        curl_command+=("${headers[@]}")
+    fi
+
     # Add data if available
     if [[ -n "$data" ]]; then
         curl_command+=("--data" "$data")
     fi
 
-    # Execute curl and handle output formats
+    # Execute the request and capture the response
     if [[ $silent == true ]]; then
-        "${curl_command[@]}" -s
-    elif [[ $verbose == true ]]; then
-        echo "Executing request:"
-        echo "Method: $method"
-        echo "URL: $url"
-        echo "Headers: ${headers[@]}"
-        echo "Data: $data"
-        "${curl_command[@]}"
+        response=$( "${curl_command[@]}" -s )
+        echo "$response"
     else
-        response=$("${curl_command[@]}" -s)
-        # Format the response output if jq or other formats are selected
-        case $output_format in
-            jq) echo "$response" | jq ;;
-            raw) echo "$response" ;;
-            *) echo "$response" ;;
-        esac
-    fi
-
-    # Save request if required
-    if [[ $save == true ]]; then
-        save_preset "$method" "$url" "${headers[@]}" "$data"
-    fi
-    
-    # Print a newline after the response
-    echo
-}
-
-# Function to save a preset to a JSON file
-function save_preset() {
-    local method=$1
-    local url=$2
-    shift 2
-    local headers=$1
-    local data=$2
-
-    jq -n --arg method "$method" --arg url "$url" --arg headers "$headers" --arg data "$data" \
-    '{method: $method, url: $url, headers: $headers, data: $data}' > "$PRESETS_FILE"
-    
-    echo "Preset saved successfully."
-}
-
-# Function to load a preset from a JSON file
-function load_preset() {
-    local preset_name=$1
-    if [[ -f "$PRESETS_FILE" ]]; then
-        method=$(jq -r '.method' "$PRESETS_FILE")
-        url=$(jq -r '.url' "$PRESETS_FILE")
-        headers=$(jq -r '.headers' "$PRESETS_FILE")
-        data=$(jq -r '.data' "$PRESETS_FILE")
-        echo "Preset $preset_name loaded: $method $url"
-    else
-        echo "No preset found."
-        exit 1
+        extract "${curl_command[@]}"
     fi
 }
+# Call the introduction function
+display_intro
 
 # Determine the HTTP method
 method=""

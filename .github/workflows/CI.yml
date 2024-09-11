@@ -15,6 +15,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Get version from VERSION file
+        id: get_version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
       - name: Build Docker image
         run: docker build -t agas .
 
@@ -27,11 +31,13 @@ jobs:
       - name: Tag Docker image
         run: |
           docker tag agas ${{ secrets.DOCKER_USERNAME }}/agas:latest
+          docker tag agas ${{ secrets.DOCKER_USERNAME }}/agas:${{ env.VERSION }}
           docker tag agas ${{ secrets.DOCKER_USERNAME }}/agas:${{ github.sha }}
 
       - name: Push Docker image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/agas:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/agas:${{ env.VERSION }}
           docker push ${{ secrets.DOCKER_USERNAME }}/agas:${{ github.sha }}
 
       - name: Clean up

@@ -1,203 +1,103 @@
-# **Software Requirements Specification (SRS) for Agas**
+# Software Requirements Specification (SRS) for Agas
 
-## **Table of Contents**
+## Introduction
 
-1. [Introduction](#1-introduction)  
-   1.1 [Purpose](#11-purpose)  
-   1.2 [Scope](#12-scope)  
-   1.3 [Definitions, Acronyms, and Abbreviations](#13-definitions-acronyms-and-abbreviations)  
-   1.4 [References](#14-references)  
-   
-2. [Overall Description](#2-overall-description)  
-   2.1 [Product Perspective](#21-product-perspective)  
-   2.2 [Product Functions](#22-product-functions)  
-   2.3 [User Classes and Characteristics](#23-user-classes-and-characteristics)  
-   2.4 [Operating Environment](#24-operating-environment)  
-   2.5 [Design and Implementation Constraints](#25-design-and-implementation-constraints)  
-   2.6 [Assumptions and Dependencies](#26-assumptions-and-dependencies)  
-   
-3. [System Features](#3-system-features)  
-   3.1 [HTTP Request Management](#31-http-request-management)  
-   3.2 [Response Management](#32-response-management)  
-   3.3 [Preset Management](#33-preset-management)  
-   3.4 [Interactive Mode](#34-interactive-mode)  
-   
-4. [External Interface Requirements](#4-external-interface-requirements)  
-   4.1 [User Interfaces](#41-user-interfaces)  
-   4.2 [Hardware Interfaces](#42-hardware-interfaces)  
-   4.3 [Software Interfaces](#43-software-interfaces)  
-   4.4 [Communication Interfaces](#44-communication-interfaces)  
-   
-5. [System Attributes](#5-system-attributes)  
-   5.1 [Performance Requirements](#51-performance-requirements)  
-   5.2 [Security Requirements](#52-security-requirements)  
-   5.3 [Usability Requirements](#53-usability-requirements)  
-   5.4 [Reliability Requirements](#54-reliability-requirements)  
-   5.5 [Portability Requirements](#55-portability-requirements)  
-   
-6. [Other Non-functional Requirements](#6-other-non-functional-requirements)  
+### Purpose
 
----
+The purpose of `Agas` is to provide a command-line tool for making HTTP requests with a range of customization options. It supports various HTTP methods and features for handling headers, data payloads, and output formatting.
 
-## 1. **Introduction**
+### Scope
 
-### 1.1 Purpose
-The purpose of this Software Requirements Specification (SRS) is to define the functional and non-functional requirements of the `agas` project. This document outlines the necessary features and behaviors of the `agas` CLI tool, designed to send HTTP requests and process responses from the terminal. It serves as a guide for developers, testers, and stakeholders to understand the capabilities of the tool.
+`Agas` will be a terminal-based tool that enables users to send HTTP requests and manage responses. It is designed to be easy to use and highly customizable, with support for Docker deployment and manual installation.
 
-### 1.2 Scope
-`Agas` is a CLI-based HTTP request tool, offering similar functionality to Postman but optimized for command-line usage. It supports all major HTTP methods (GET, POST, PUT, DELETE, PATCH), manages request headers and data, and offers features like response formatting, preset management, and an interactive mode for easy request creation. The tool also provides advanced features like short flags, verbose/silent modes, and response formatting options for different content types.
+### Definitions
 
-This SRS focuses on the technical and functional aspects of the `agas` tool, defining its core features, usage scenarios, and interface requirements.
+- **HTTP Methods**: Types of requests made to a server, such as GET, POST, PUT, DELETE.
+- **Headers**: Metadata sent along with the request, such as content type or authentication tokens.
+- **Payload**: Data sent with the request, typically in JSON or form data.
 
-### 1.3 Definitions, Acronyms, and Abbreviations
-- **CLI**: Command Line Interface.
-- **HTTP**: HyperText Transfer Protocol.
-- **REST**: Representational State Transfer, a style of software architecture for distributed systems.
-- **API**: Application Programming Interface.
-- **JSON**: JavaScript Object Notation, a lightweight data-interchange format.
-- **GET, POST, PUT, DELETE, PATCH**: HTTP methods used to communicate with APIs.
-- **Agas**: The project name, which is a CLI HTTP request tool.
-- **Preset**: A saved HTTP request configuration that can be reused.
+## Functional Requirements
 
-### 1.4 References
-- [Postman Documentation](https://www.postman.com)
-- [Curl Documentation](https://curl.se/docs/)
-- [jq JSON Processor](https://stedolan.github.io/jq/)
+### HTTP Methods
 
----
+1. **GET**: Retrieve data from a server.
+2. **POST**: Send data to a server.
+3. **PUT**: Update data on a server.
+4. **DELETE**: Remove data from a server.
 
-## 2. **Overall Description**
+### Headers
 
-### 2.1 Product Perspective
-`Agas` is positioned as a CLI-based alternative to GUI tools like Postman. The tool focuses on simplicity and ease of use, targeting developers and system administrators who prefer working in the terminal. It can be integrated into automation scripts, CI/CD pipelines, and used interactively to test APIs quickly.
+1. **Custom Headers**: Users can add custom headers using the `-H` or `--header` option.
+2. **Content-Type**: Specify the type of content being sent, such as `application/json`.
 
-The tool is built on top of standard utilities like `curl` for HTTP requests and `jq` for response formatting. It provides a layer of convenience through presets, autocompletion, and interactive request generation.
+### Data Payload
 
-### 2.2 Product Functions
-`Agas` provides the following core functionalities:
-- Support for common HTTP methods: GET, POST, PUT, DELETE, PATCH.
-- The ability to specify headers, query parameters, and request bodies.
-- Response management, including formatting (JSON, plain text, HTML).
-- Preset management to save and reuse commonly used requests.
-- An interactive mode for guiding users through request creation.
-- Response verbosity control (`--verbose` and `--silent`).
-- Autocomplete for common flags and request parts.
-  
-### 2.3 User Classes and Characteristics
-The users of `agas` fall into two primary categories:
-- **Developers**: Primarily working with APIs and HTTP requests during application development.
-- **System Administrators / DevOps Engineers**: Using HTTP requests for server health checks, monitoring, or automation scripts.
+1. **JSON**: Send data in JSON format using the `-d` or `--data` option.
+2. **Form Data**: Send data in application/x-www-form-urlencoded format.
 
-### 2.4 Operating Environment
-The tool operates in a terminal environment on Unix-like systems (Linux, macOS) and Windows. It requires:
-- Bash or equivalent shell.
-- `curl` for HTTP request handling.
-- `jq` for response formatting (optional but recommended).
-- Node.js environment for installation and execution (in case it's packaged with Node.js).
+### Output Formatting
 
-### 2.5 Design and Implementation Constraints
-- The tool is designed to be run in a terminal/command-line interface.
-- Dependency on external utilities such as `curl` and `jq` for core operations.
-- Must be compatible with major operating systems (Linux, macOS, Windows).
-  
-### 2.6 Assumptions and Dependencies
-- The user has a basic understanding of HTTP methods and command-line usage.
-- Internet connectivity is required for executing most API requests.
-- Optional dependencies like `jq` should be installed for response formatting.
+1. **Raw Output**: Display raw response data.
+2. **Formatted Output**: Use `jq` to format JSON responses.
 
----
+### Docker Support
 
-## 3. **System Features**
+1. **Build Docker Image**: Create a Docker image for easy deployment.
+2. **Run Docker Container**: Execute the tool in a Docker container.
 
-### 3.1 HTTP Request Management
-The primary feature of `agas` is managing HTTP requests.
+### Manual Installation
 
-#### Description
-The tool allows users to send HTTP requests to APIs and web services. It supports all standard HTTP methods (GET, POST, PUT, DELETE, PATCH). Users can define custom headers, URL parameters, and data payloads for their requests.
+1. **Dependencies**: Install required dependencies, including bash and curl.
+2. **Script Installation**: Install the `agas` script to a system-wide location.
 
-#### Functional Requirements
-- Users must be able to send HTTP requests using the following methods: GET, POST, PUT, DELETE, PATCH.
-- The tool must allow the addition of custom headers using the `-H` or `--header` flag.
-- The tool must support sending data in POST or PUT requests using the `-d` or `--data` flag.
+## Non-Functional Requirements
 
-### 3.2 Response Management
-The tool must handle the responses returned by the server.
+### Performance
 
-#### Description
-Once a request is made, `agas` handles the response by displaying it in a readable format. It supports output formatting based on the content type, including pretty-printing for JSON responses.
+1. **Efficiency**: The tool should handle HTTP requests promptly without significant delays.
 
-#### Functional Requirements
-- Responses must be displayed in the terminal.
-- JSON responses must be formatted using `jq`.
-- Options for verbose or silent output (`--verbose`, `--silent`) must be available.
-  
-### 3.3 Preset Management
-The tool allows users to save and reuse request configurations.
+### Usability
 
-#### Description
-Users can save their request configurations (method, URL, headers, data) as presets and reload them later.
+1. **Ease of Use**: The tool should be intuitive and easy to use from the command line.
+2. **Documentation**: Comprehensive documentation should be available for users.
 
-#### Functional Requirements
-- Presets must be saved using the `--save` flag with a custom name.
-- Saved presets must be loaded using the `--preset` flag with the preset name.
-  
-### 3.4 Interactive Mode
-An interactive mode for simplified user interaction.
+### Reliability
 
-#### Description
-In this mode, users are guided step-by-step to build their HTTP request by answering prompts. This mode is suitable for beginners or those unfamiliar with HTTP requests.
+1. **Error Handling**: The tool should handle errors gracefully and provide meaningful error messages.
 
-#### Functional Requirements
-- Interactive mode must be initiated with the `--interactive` flag.
-- The tool must prompt users for the HTTP method, URL, headers, and data in a step-by-step manner.
-  
----
+### Security
 
-## 4. **External Interface Requirements**
+1. **Secure Handling**: Ensure that sensitive information is handled securely and avoid hardcoding secrets.
 
-### 4.1 User Interfaces
-- Terminal-based command-line interface with support for `bash`, `zsh`, and Windows command prompt/PowerShell.
-  
-### 4.2 Hardware Interfaces
-No specific hardware interfaces are required.
+## External Interface Requirements
 
-### 4.3 Software Interfaces
-- `curl` for sending HTTP requests.
-- `jq` for formatting JSON responses.
-  
-### 4.4 Communication Interfaces
-- Communicates over the internet using standard HTTP/HTTPS protocols.
-  
----
+### User Interfaces
 
-## 5. **System Attributes**
+1. **Command Line Interface (CLI)**: The primary interface for users to interact with `Agas`.
 
-### 5.1 Performance Requirements
-- `Agas` must be able to handle multiple requests per second.
-- The response time should be minimal, dependent only on network latency and API response times.
+### Hardware Interfaces
 
-### 5.2 Security Requirements
-- No sensitive information (like credentials) should be stored or exposed inappropriately.
-- Secure handling of request data and responses.
+1. **System Requirements**: The tool should be compatible with standard hardware running Linux or similar operating systems.
 
-### 5.3 Usability Requirements
-- Command-line arguments and options must be intuitive and well-documented.
-- Error messages should be clear and guide users towards resolution.
+### Software Interfaces
 
-### 5.4 Reliability Requirements
-- The tool should handle unexpected input gracefully and provide informative error messages.
-- Must work consistently across supported operating systems.
+1. **Docker**: Support for Docker for containerized deployment.
+2. **Dependencies**: Requires bash and curl for manual installation.
 
-### 5.5 Portability Requirements
-- Should be compatible with Unix-like systems and Windows.
-- Installation process must be straightforward, ideally through package managers or direct binary download.
+## Design Constraints
 
----
+1. **Compatibility**: The tool should be compatible with Unix-like operating systems.
+2. **Resource Usage**: Should be lightweight and not consume excessive system resources.
 
-## 6. **Other Non-functional Requirements**
+## Appendices
 
-- **Documentation**: Comprehensive documentation should be provided, including a user guide and developer guide.
-- **Testing**: The tool must be thoroughly tested for different use cases and edge cases.
-- **Maintenance**: Regular updates and bug fixes should be provided to address issues and add new features as needed.
+### References
 
----
+- [Semantic Versioning](https://semver.org/)
+- [Contributor Covenant](https://www.contributor-covenant.org)
+
+### Glossary
+
+- **CLI**: Command Line Interface
+- **JSON**: JavaScript Object Notation
+- **Docker**: Containerization platform

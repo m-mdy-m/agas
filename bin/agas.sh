@@ -11,9 +11,6 @@ function type_effect() {
 }
 
 function display_intro() {
-    local intro_file="$HOME/.agas_intro_shown"
-    if [[ ! -f "$intro_file" ]]; then
-        # Simulate a typing effect with a fun, anime-like intro
         echo -e "\033[1;32m"
         type_effect "============================="
         type_effect "|                           |"
@@ -67,7 +64,6 @@ EOF
         echo -e "\033[0m"
         echo
         touch "$intro_file"
-    fi
 }
 function formatoutput() {
     local method=$1
@@ -234,7 +230,12 @@ function send_request() {
     fi
 }
 # Call the introduction function
-display_intro
+for arg in "$@"; do
+    if [[ "$arg" == *"Agas"* || "$arg" == *"agas"* ]]; then
+        display_intro
+        break
+    fi
+done
 
 # Determine the HTTP method
 method=""
@@ -243,7 +244,6 @@ case $1 in
     @post) method="POST" ;;
     @put) method="PUT" ;;
     @delete) method="DELETE" ;;
-    @patch) method="PATCH" ;;
     *) echo "Unknown method: $1"; exit 1 ;;
 esac
 

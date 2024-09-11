@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  agas:
+    build:
+      context: .
+    container_name: agas
+    command: ["agas"] 
+    tty: true
+    stdin_open: true

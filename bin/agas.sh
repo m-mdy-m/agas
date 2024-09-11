@@ -229,14 +229,10 @@ function send_request() {
         extract "${curl_command[@]}"
     fi
 }
-# Call the introduction function
-for arg in "$@"; do
-    if [[ "$arg" == *"Agas"* || "$arg" == *"agas"* ]]; then
-        display_intro
-        break
-    fi
-done
-
+if [ "$#" -eq 0 ] || [[ "$@" == *"Agas"* || "$@" == *"agas"* ]]; then
+    display_intro
+    exit 0
+fi
 # Determine the HTTP method
 method=""
 case $1 in

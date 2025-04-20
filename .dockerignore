@@ -1,2 +1,14 @@
-docs
-.github
+node_modules
+dist
+
+*.ts
+tests/
+docs/
+cli/
+
+.git
+.gitignore
+Dockerfile*
+docker-compose*.yml
+
+.DS_Store

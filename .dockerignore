@@ -1,9 +1,7 @@
 node_modules
 dist
 
-*.ts
 tests/
-docs/
 cli/
 
 .git

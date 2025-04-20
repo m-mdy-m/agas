@@ -1,13 +1,16 @@
-version: "3.8"
-
+version: '3.8' #
 services:
   agas:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: agas
-    command: ["agas"]
+    image: mmdy/agas:latest
+    container_name: agas_cli
+    entrypoint: ['agas']
+    command: ['--help']
     tty: true
     stdin_open: true
     environment:
-      - LICENSE=MIT
+      - BUN_INSTALL=/usr/local/bin/bun
+    volumes:
+      - .:/app:ro

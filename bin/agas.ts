@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { colors, spinner } from '../cli'
+import { colors, spinner } from './color.util'
 import { Agas } from '../dist'
 import { RequestMethod } from '../src/common'
 

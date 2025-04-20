@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+
+    "allowJs": true,
+    "verbatimModuleSyntax": true,
+
+    "noEmit": false,
+    "outDir": ".",
+    "declaration": true,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+
+    "sourceMap": false,
+    "strictNullChecks": true,
+    "incremental": false,
+    "rootDirs": ["src", "cli", "bin"],
+    "baseUrl": ".",
+    "rootDir": ".",
+    "strict": true,
+    "useUnknownInCatchVariables": true,
+    "skipLibCheck": true,
+
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "isolatedModules": true
+  },
+  "include": ["src", "cli", "bin", "tests"],
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+}

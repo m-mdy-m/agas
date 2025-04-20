@@ -1,0 +1,57 @@
+{
+  "name": "agas",
+  "version": "1.0.0-alpha",
+  "description": "Agas is a minimal, CLI-friendly HTTP client powered by Bun,",
+  "type": "module",
+  "module": "dist/index",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts  --outdir./dist --minify --format esm --target bun",
+    "test": "bun test ./test/*",
+    "clean": "rm -rf dist",
+    "build:cli": "bun build ./bin/agas.ts --outdir ./dist/bin --minify --format esm --target bun",
+    "dev": "bun run ./bin/agas",
+    "docekr:build": "docker-compose build",
+    "docker:run": "docker-compose run --rm agas @get https://httpbin.org/get",
+    "npm:test": "npm pack"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "dependencies": {
+    "@glandjs/common": "^1.0.1-alpha",
+    "@glandjs/events": "^1.0.1-alpha",
+    "@medishn/toolkit": "^1.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/m-mdy-m/agas"
+  },
+  "bugs": {
+    "url": "https://github.com/m-mdy-m/agas/issues"
+  },
+  "homepage": "https://github.com/m-mdy-m/agas#readme",
+  "keywords": [
+    "http-client",
+    "bun",
+    "cli",
+    "request",
+    "events",
+    "broker",
+    "glandjs"
+  ],
+  "author": "Mahdi <bitsgenix@gmail.com>",
+  "license": "MIT",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/m-mdy-m"
+  }
+}

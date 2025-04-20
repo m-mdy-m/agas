@@ -14,10 +14,8 @@ RUN sed -i 's|from '\''../cli'\''|from '\''./cli'\''|g' bin/agas.ts
 RUN bun build ./src/index.ts --outdir ./dist --minify --format esm --target bun && \
     bun build ./bin/agas.ts --outdir ./build --minify --format esm --target bun
 
-FROM alpine:latest
+FROM oven/bun:alpine
 LABEL stage=runtime
-
-RUN apk add --no-cache ca-certificates bun
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 

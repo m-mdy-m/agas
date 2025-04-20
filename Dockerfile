@@ -1,5 +1,4 @@
-FROM oven/bun:alpine AS builder
-LABEL stage=builder
+FROM oven/bun:alpine
 
 WORKDIR /app
 
@@ -9,19 +8,16 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-RUN sed -i 's|from '\''../cli'\''|from '\''./cli'\''|g' bin/agas.ts
+RUN bun build ./src/index.ts --outdir ./dist --minify --format esm --target bun
 
-RUN bun build ./src/index.ts --outdir ./dist --minify --format esm --target bun && \
-    bun build ./bin/agas.ts --outdir ./build --minify --format esm --target bun
+RUN sed -i 's|from "../cli"|from "../../cli"|g' bin/agas.ts
 
-FROM oven/bun:alpine
-LABEL stage=runtime
+RUN bun build ./bin/agas.ts --outdir ./build --minify --format esm --target bun
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-COPY --from=builder /app/build/agas.js /usr/local/bin/agas
-
-RUN chmod +x /usr/local/bin/agas
+RUN chmod +x /app/build/agas.js
+RUN ln -s /app/build/agas.js /usr/local/bin/agas
 
 USER appuser
 

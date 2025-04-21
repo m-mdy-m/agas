@@ -197,6 +197,9 @@ export class Fetch {
     response: Response,
     type: string
   ): Promise<any> {
+    if (response.status === 204) {
+      return null
+    }
     switch (type) {
       case 'json':
         return await ResponseParser.parseJson(response)

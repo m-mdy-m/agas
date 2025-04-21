@@ -1,5 +1,5 @@
 {
-  "name": "agas",
+  "name": "@medishn/agas",
   "version": "1.0.0-alpha",
   "description": "Agas is a minimal, CLI-friendly HTTP client powered by Bun,",
   "type": "module",
@@ -8,7 +8,7 @@
     "dist/"
   ],
   "scripts": {
-    "build": "bun build ./src/index.ts  --outdir./dist --minify --format esm --target bun",
+    "build": "bun build ./src/index.ts  --outdir ./dist --minify --format esm --target bun",
     "test": "bun test ./test/*",
     "clean": "rm -rf dist",
     "build:cli": "bun build ./bin/agas.ts --outdir ./dist/bin --minify --format esm --target bun",

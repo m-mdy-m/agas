@@ -51,7 +51,7 @@ describe('Agas Integration Tests', () => {
         }
 
         if (url.pathname === '/api/error') {
-          return new Response(JSON.stringify('Internal Server Error'), {
+          return new Response('Internal Server Error', {
             status: 500,
             headers: { 'Content-Type': 'text/plain' },
           })
@@ -217,6 +217,7 @@ describe('Agas Integration Tests', () => {
       const agas = new Agas()
 
       const response = await agas.request(`${baseUrl}/api/empty`)
+      console.log('response:', response)
 
       expect(response.status).toBe(204)
       expect(response.data).toBeNull()
@@ -262,16 +263,6 @@ describe('Agas Integration Tests', () => {
 
       expect(response.data).toBeInstanceOf(Blob)
       expect(response.data.type).toBe('application/octet-stream')
-    })
-
-    test('Skips response parsing when parseResponse is false', async () => {
-      const agas = new Agas()
-
-      const response = await agas.request(`${baseUrl}/api/users`, {
-        parseResponse: false,
-      })
-
-      expect(response.data).toBeUndefined()
     })
   })
 

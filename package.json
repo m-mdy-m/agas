@@ -17,6 +17,7 @@
     "docker:run": "docker-compose run --rm agas @get https://httpbin.org/get",
     "npm:test": "npm pack"
   },
+  "sideEffects": false,
   "engines": {
     "bun": ">=1.0.0"
   },
@@ -27,7 +28,6 @@
     "@types/bun": "latest"
   },
   "dependencies": {
-    "@glandjs/common": "^1.0.1-alpha",
     "@glandjs/events": "^1.0.1-alpha",
     "@medishn/toolkit": "^1.0.3"
   },

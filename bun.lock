@@ -4,7 +4,6 @@
     "": {
       "name": "agas",
       "dependencies": {
-        "@glandjs/common": "^1.0.1-alpha",
         "@glandjs/events": "^1.0.1-alpha",
         "@medishn/toolkit": "^1.0.3",
       },

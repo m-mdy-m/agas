@@ -69,3 +69,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Limited file upload capabilities in the current version
 - No built-in persistent cookie jar
 - No built-in session management
+
+## [1.1.0] - 2025-04-25
+
+### Changed
+
+- **Refactored Event System**: Replaced `@glandjs/events` with the lightweight `@glandjs/emitter` to streamline event handling and reduce overhead.
+- **Dependency Cleanup**: Removed `@medishn/toolkit` to minimize external dependencies and enhance maintainability.
+
+### Performance Improvements
+
+- **Reduced Package Size**: Optimized the build process, decreasing the package size from approximately 64KB to just 8KB, resulting in faster load times and improved performance.
+
+### Developer Notes
+
+- **Simplified Architecture**: The transition to `@glandjs/emitter` simplifies the event-driven architecture, making it more intuitive and efficient.
+- **Lean Build**: By eliminating unnecessary dependencies, the codebase is now leaner, facilitating easier debugging and faster development cycles.

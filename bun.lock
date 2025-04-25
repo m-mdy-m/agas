@@ -4,8 +4,7 @@
     "": {
       "name": "agas",
       "dependencies": {
-        "@glandjs/events": "^1.0.1-alpha",
-        "@medishn/toolkit": "^1.0.3",
+        "@glandjs/emitter": "^1.0.0-alpha",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -16,21 +15,13 @@
     },
   },
   "packages": {
-    "@glandjs/common": ["@glandjs/common@1.0.1-alpha", "", { "dependencies": { "@medishn/toolkit": "^1.0.3", "tslib": "2.8.1" }, "peerDependencies": { "reflect-metadata": "^0.1.12" } }, "sha512-bAU7etKyMM0hYFnDtTjY107mNkMZw6fK1iT+umpYzkmEUpuXKZxZFT5dFdQ1KFeHSvUoDitsZqEnkYuEt72kzg=="],
-
-    "@glandjs/events": ["@glandjs/events@1.0.1-alpha", "", { "dependencies": { "@medishn/toolkit": "^1.0.3", "tslib": "2.8.1" }, "peerDependencies": { "@glandjs/common": "1.0.1-alpha" } }, "sha512-JfixHYm8Hl4FiDvWTfCseIY4EgPLlfvs3fD8Aicyzb3tiocd3eaDMbPaLYHRtVc/wW73pjQzDm/RfT1/2ngRrA=="],
-
-    "@medishn/toolkit": ["@medishn/toolkit@1.0.3", "", {}, "sha512-o9f0qiUXq+gt++FoFH3CDk4VGxiajbjt089uhX0/oypIiZZBMMwSARY6QSEYxu6TnKZC7SoiR2QrbGgmIXdu/g=="],
+    "@glandjs/emitter": ["@glandjs/emitter@1.0.0-alpha", "", {}, "sha512-foFZ2H8TGGF7/9Ej/pAp2egYeKbOVW3M51y8alu9GtPsqKYKDY8LcCDE7EYm+zq3vd4TY+gaqxlN8mgig4lslg=="],
 
     "@types/bun": ["@types/bun@1.2.10", "", { "dependencies": { "bun-types": "1.2.10" } }, "sha512-eilv6WFM3M0c9ztJt7/g80BDusK98z/FrFwseZgT4bXCq2vPhXD4z8R3oddmAn+R/Nmz9vBn4kweJKmGTZj+lg=="],
 
     "@types/node": ["@types/node@22.14.1", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-u0HuPQwe/dHrItgHHpmw3N2fYCR6x4ivMNbPHRkBVP4CvN+kiRrKHWk3i8tXiO/joPwXLMYvF9TTF0eqgHIuOw=="],
 
     "bun-types": ["bun-types@1.2.10", "", { "dependencies": { "@types/node": "*" } }, "sha512-b5ITZMnVdf3m1gMvJHG+gIfeJHiQPJak0f7925Hxu6ZN5VKA8AGy4GZ4lM+Xkn6jtWxg5S3ldWvfmXdvnkp3GQ=="],
-
-    "reflect-metadata": ["reflect-metadata@0.1.14", "", {}, "sha512-ZhYeb6nRaXCfhnndflDK8qI6ZQ/YcWZCISRAWICW9XYqMUwjZM9Z0DveWX/ABN01oxSHwVxKQmxeYZSsm0jh5A=="],
-
-    "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "typescript": ["typescript@5.8.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ=="],
 

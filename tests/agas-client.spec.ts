@@ -217,7 +217,6 @@ describe('Agas Integration Tests', () => {
       const agas = new Agas()
 
       const response = await agas.request(`${baseUrl}/api/empty`)
-      console.log('response:', response)
 
       expect(response.status).toBe(204)
       expect(response.data).toBeNull()

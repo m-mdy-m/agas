@@ -1,4 +1,4 @@
-import { Broker } from '@glandjs/events'
+import { EventEmitter } from '@glandjs/emitter'
 import type { ErrorData, RequestData, ResponseData } from '../common'
 
 /**
@@ -6,27 +6,27 @@ import type { ErrorData, RequestData, ResponseData } from '../common'
  * Provides a clean API for subscribing to and emitting events related to HTTP requests
  */
 export class AgasEvents {
-  private readonly broker: Broker = new Broker('agas')
+  private readonly emitter = new EventEmitter()
 
   constructor() {}
 
   onRequest(handler: (data: RequestData) => void) {
-    return this.broker.on('request:start', handler)
+    return this.emitter.on('request:start', handler)
   }
 
   onResponse(handler: (data: ResponseData) => void) {
-    return this.broker.on('response:received', handler)
+    return this.emitter.on('response:received', handler)
   }
   onError(handler: (data: ErrorData) => void) {
-    return this.broker.on('request:error', handler)
+    return this.emitter.on('request:error', handler)
   }
   emitRequestStart(data: RequestData) {
-    this.broker.emit('request:start', data, { queue: true })
+    this.emitter.emit('request:start', data)
   }
   emitResponseReceived(data: ResponseData) {
-    this.broker.emit('response:received', data, { queue: true })
+    this.emitter.emit('response:received', data)
   }
   emitError(data: ErrorData) {
-    this.broker.emit('request:error', data, { queue: true })
+    this.emitter.emit('request:error', data)
   }
 }

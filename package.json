@@ -1,12 +1,10 @@
 {
   "name": "@medishn/agas",
-  "version": "1.1.0-alpha",
+  "version": "1.0.0",
   "description": "Agas is a minimal, CLI-friendly HTTP client powered by Bun,",
   "type": "module",
   "module": "dist/index",
-  "files": [
-    "dist/"
-  ],
+  "files": ["dist/"],
   "scripts": {
     "build": "bun build ./src/index.ts  --outdir ./dist --minify --format esm --target bun",
     "test": "bun test ./test/*",
@@ -32,7 +30,7 @@
     "@types/bun": "latest"
   },
   "dependencies": {
-    "@glandjs/emitter": "^1.0.0-alpha"
+    "@glandjs/emitter": "^1.0.0"
   },
   "repository": {
     "type": "git",
@@ -42,15 +40,7 @@
     "url": "https://github.com/m-mdy-m/agas/issues"
   },
   "homepage": "https://github.com/m-mdy-m/agas#readme",
-  "keywords": [
-    "http-client",
-    "bun",
-    "cli",
-    "request",
-    "events",
-    "broker",
-    "glandjs"
-  ],
+  "keywords": ["http-client", "bun", "cli", "request", "events", "broker", "glandjs"],
   "author": "Mahdi <bitsgenix@gmail.com>",
   "license": "MIT",
   "funding": {

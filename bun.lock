@@ -4,7 +4,7 @@
     "": {
       "name": "agas",
       "dependencies": {
-        "@glandjs/emitter": "^1.0.0-alpha",
+        "@glandjs/emitter": "^1.0.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -15,7 +15,7 @@
     },
   },
   "packages": {
-    "@glandjs/emitter": ["@glandjs/emitter@1.0.0-alpha", "", {}, "sha512-foFZ2H8TGGF7/9Ej/pAp2egYeKbOVW3M51y8alu9GtPsqKYKDY8LcCDE7EYm+zq3vd4TY+gaqxlN8mgig4lslg=="],
+    "@glandjs/emitter": ["@glandjs/emitter@1.0.0", "", {}, "sha512-fKaWdsIcnrvJKoA8bzKfCPu6fepaxNXEaf2eDz6rn9AdMgIO+Vpj0I0+WXGPAJd9Ies+eDyTHvt9ymOUxv566A=="],
 
     "@types/bun": ["@types/bun@1.2.10", "", { "dependencies": { "bun-types": "1.2.10" } }, "sha512-eilv6WFM3M0c9ztJt7/g80BDusK98z/FrFwseZgT4bXCq2vPhXD4z8R3oddmAn+R/Nmz9vBn4kweJKmGTZj+lg=="],
 

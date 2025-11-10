@@ -86,10 +86,10 @@ For environments where installing Node.js or Bun isn't desirable, Agas can be ru
 
 ```bash
 # Pull the latest image
-docker pull medishn/agas:latest
+docker pull bitsgenix/agas:latest
 
 # Run Agas commands
-docker run --rm medishn/agas @get https://api.example.com/users
+docker run --rm bitsgenix/agas @get https://api.example.com/users
 ```
 
 ## Command Line Interface

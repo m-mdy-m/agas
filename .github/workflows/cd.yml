@@ -121,10 +121,11 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: binaries-${{ github.ref_name }}-${{ matrix.target }}
           path: |
             agas-${{ github.ref_name }}-${{ matrix.target }}.*
             agas-${{ matrix.target }}.sha256
+          if-no-files-found: error
   publish-docker:
     name: Publish Docker Image
     needs: create-release

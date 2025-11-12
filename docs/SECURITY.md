@@ -4,7 +4,8 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.0-alpha   | :white_check_mark: |
+| 2.x     | :white_check_mark: |
+| 1.x     | :x:                |
 
 ## Security Considerations for Agas
 

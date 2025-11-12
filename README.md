@@ -25,6 +25,103 @@ Agas is a minimal, CLI-friendly HTTP client powered by Bun. It provides a simple
 - **Type-safe**: Written in TypeScript with full type definitions
 - **Docker Support**: Run in containers without dependencies
 
+
+## Installation
+
+### Package Managers
+
+```bash
+# NPM
+npm install -g agas
+
+# Yarn
+yarn global add agas
+
+# Bun
+bun install -g agas
+```
+
+### Docker
+
+```bash
+# Pull from Docker Hub
+docker pull bitsgenix/agas:latest
+
+# Run
+docker run --rm bitsgenix/agas get https://api.github.com
+```
+
+### Binary
+
+```bash
+# Linux/macOS
+curl -fsSL https://raw.githubusercontent.com/m-mdy-m/agas/main/scripts/install.sh | sh
+
+# Windows
+irm  https://raw.githubusercontent.com/m-mdy-m/agas/main/scripts/install.ps1 | iex
+```
+
+## Quick Start
+
+### CLI
+
+```bash
+# Simple GET request
+agas get https://api.github.com/users/octocat
+
+# POST with JSON data
+agas post https://httpbin.org/post \
+  --json name=John \
+  --json email=john@example.com
+
+# With authentication
+agas get https://api.github.com/user \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Pretty printed, table format
+agas get https://api.github.com/users --pretty --table
+
+# Save response to file
+agas get https://api.github.com/users -o users.json
+
+# Save request for later
+agas post https://api.example.com/users \
+  --json name=John \
+  --save create-user
+
+# Run saved request
+agas run create-user
+```
+
+### API
+
+```typescript
+import { Agas } from '@medishn/agas';
+
+// Create client
+const client = new Agas({
+  baseURL: 'https://api.example.com',
+  headers: {
+    'Authorization': 'Bearer token123'
+  }
+});
+
+// Make request
+const response = await client.get('/users');
+console.log(response.data);
+
+// With interceptors
+client.interceptors.request.use((config) => {
+  console.log('Sending:', config.method, config.url);
+  return config;
+});
+
+// Listen to events
+client.on('response', (data) => {
+  console.log('Response:', data.status, data.duration + 'ms');
+});
+```
+
 ## Contributing
 
 Contributions, suggestions, and improvements are very welcome!
@@ -44,11 +141,34 @@ Check out the [User Guide](./User_Guide.md) to learn how to use Agas effectively
 
 You can view the list of recent changes in the [CHANGELOG](./docs/CHANGELOG.md).
 
-## Acknowledgements
+## Acknowledgments
 
 - Built with [Bun](https://bun.sh)
-- Uses [GlandJS](https://github.com/glandjs/gland) for event handling
+- Inspired by [HTTPie](https://httpie.io) and [curl](https://curl.se)
+- Event system powered by [@glandjs/emitter](https://github.com/glandjs/emitter)
 
-## License
+## Stats
 
-MIT © [Mahdi](https://github.com/m-mdy-m)
+<div align="center">
+
+![GitHub stars](https://img.shields.io/github/stars/m-mdy-m/agas?style=social)
+![GitHub forks](https://img.shields.io/github/forks/m-mdy-m/agas?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/m-mdy-m/agas?style=social)
+
+</div>
+
+## Links
+
+- **NPM**: https://www.npmjs.com/package/@medishn/agas
+- **Docker Hub**: https://hub.docker.com/r/bitsgenix/agas
+- **Documentation**: https://github.com/m-mdy-m/agas/tree/main/docs
+- **Issues**: https://github.com/m-mdy-m/agas/issues
+- **Changelog**: [CHANGELOG.md](docs/CHANGELOG.md)
+
+<div align="center">
+
+**[⬆ back to top](#agas)**
+
+Made with ❤️ by [Mahdi](https://github.com/m-mdy-m)
+
+</div>

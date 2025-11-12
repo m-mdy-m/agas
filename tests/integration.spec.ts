@@ -1,6 +1,6 @@
 
 import { describe, test, expect } from 'bun:test';
-import { Agas } from '../dist';
+import { Agas } from '../src';
 
 describe('Integration Tests', () => {
   test('GitHub API', async () => {

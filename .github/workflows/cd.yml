@@ -106,14 +106,16 @@ jobs:
         run: bun build ./bin/agas.ts --compile --outfile ./agas-${{ matrix.target }}${{ matrix.ext }} --target ${{ matrix.bun-target }} --minify
         shell: pwsh
 
-      - name: Create checksum
-        shell: bash
+      - name: Create checksum (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            certutil -hashfile agas-${{ matrix.target }}${{ matrix.ext }} SHA256 | findstr /v "hash" > agas-${{ matrix.target }}.sha256
-          else
-            shasum -a 256 agas-${{ matrix.target }}${{ matrix.ext }} > agas-${{ matrix.target }}.sha256
-          fi
+          certutil -hashfile agas-${{ matrix.target }}${{ matrix.ext }} SHA256 | ForEach-Object { ($_ -split ' ')[-1] } > agas-${{ matrix.target }}.sha256
+
+      - name: Create checksum (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: shasum -a 256 agas-${{ matrix.target }}${{ matrix.ext }} > agas-${{ matrix.target }}.sha256
 
       - name: Package binary (Unix)
         if: runner.os != 'Windows'

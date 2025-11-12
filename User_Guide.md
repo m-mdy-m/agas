@@ -1,679 +1,774 @@
 # Agas User Guide
 
-```
-╭──────╮ ╭────╮ ╭────╮ ╭────╮
-│  ▄▀▄ │ │ ▄▀▀│ │ ▄▀▀│ │ ▀▀▄│
-│  █ █ │ │ ▀▀▄│ │ ▀▀▄│ │ ▄▄▀│
-╰──────╯ ╰────╯ ╰────╯ ╰────╯
-         A G A S
-```
+**Version 2.0.2**
 
-**Version 1.0.0-alpha**
+## What is Agas?
 
-## Table of Contents
-1. [Introduction](#introduction)
-2. [Installation](#installation)
-   - [Package Managers](#package-managers)
-   - [Docker](#docker)
-3. [Command Line Interface](#command-line-interface)
-   - [Basic Syntax](#basic-syntax)
-   - [Common Commands](#common-commands)
-   - [Options in Detail](#options-in-detail)
-   - [Examples](#cli-examples)
-4. [JavaScript/TypeScript API](#javascripttypescript-api)
-   - [Making Requests](#making-requests)
-   - [Working with Response Data](#working-with-response-data)
-   - [Error Handling](#error-handling)
-   - [Event System](#event-system)
-   - [Advanced Configuration](#advanced-configuration)
-5. [Use Cases](#use-cases)
-   - [API Testing](#api-testing)
-   - [Backend Health Checks](#backend-health-checks)
-   - [Data Fetching Scripts](#data-fetching-scripts)
-6. [Best Practices](#best-practices)
-7. [Troubleshooting](#troubleshooting)
-8. [Reference](#reference)
-   - [Request Methods](#request-methods)
-   - [Response Object Properties](#response-object-properties)
-   - [Event Types](#event-types)
+Agas is a fast and simple HTTP client that works both from the command line and in your JavaScript code. It's built with Bun, which makes it really quick, and it's designed to be easy to use whether you're testing APIs or building applications.
 
-## Introduction
+Think of it as a tool that helps you talk to websites and APIs. You can send requests, get responses, and work with data without writing much code.
 
-Agas is a minimal, CLI-friendly HTTP client built specifically for Bun. It provides both a command-line interface and a JavaScript/TypeScript API for making HTTP requests. Agas specializes in delivering a simple yet powerful interface for interacting with web APIs, featuring colorful terminal output, an event-driven architecture, and support for modern HTTP features.
+## Installing Agas
 
-Key features:
-- Fast and lightweight Bun-based HTTP client
-- Interactive command-line interface with color formatting
-- Event-driven request/response cycle
-- Support for JSON, FormData, and raw body formats
-- Timeouts, redirection handling, and other modern HTTP features
-- Comprehensive TypeScript definitions
+You have several ways to install Agas. Pick the one that works best for you.
 
-## Installation
+### Using a Package Manager
 
-### Package Managers
+If you use npm, yarn, or bun for managing your JavaScript projects:
 
-#### Using npm
 ```bash
-# Install globally for CLI usage
+# With npm (install globally to use from anywhere)
 npm install -g @medishn/agas
 
-# Install locally in a project
-npm install @medishn/agas
-```
-
-#### Using Yarn
-```bash
-# Install globally for CLI usage
+# With yarn
 yarn global add @medishn/agas
 
-# Install locally in a project
-yarn add @medishn/agas
-```
-
-#### Using Bun
-```bash
-# Install globally for CLI usage
+# With bun
 bun install -g @medishn/agas
-
-# Install locally in a project
-bun add @medishn/agas
 ```
 
-### Docker
+After installing, you can run `agas` from any directory in your terminal.
 
-For environments where installing Node.js or Bun isn't desirable, Agas can be run via Docker:
+### Using the Install Script
+
+This is the easiest way if you just want to download and use Agas:
+
+**On Linux or Mac:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/m-mdy-m/agas/main/scripts/install.sh | sh
+```
+
+**On Windows:**
+```powershell
+irm https://raw.githubusercontent.com/m-mdy-m/agas/main/scripts/install.ps1 | iex
+```
+
+The script will:
+- Figure out your operating system and processor type
+- Download the right version for your computer
+- Put it in a folder on your system
+- Make sure you can run it from anywhere
+
+### Using Docker
+
+If you prefer containers or don't want to install anything directly:
 
 ```bash
-# Pull the latest image
+# Download the image
 docker pull bitsgenix/agas:latest
 
-# Run Agas commands
-docker run --rm bitsgenix/agas @get https://api.example.com/users
+# Use it
+docker run --rm bitsgenix/agas get https://api.github.com
 ```
 
-## Command Line Interface
+### Checking Your Installation
 
-### Basic Syntax
+After installing, make sure it works:
 
-The general format for Agas CLI commands is:
-
-```
-agas @<method> <url> [options]
-```
-
-Where:
-- `@<method>` is one of the HTTP methods like `@get`, `@post`, etc.
-- `<url>` is the URL to send the request to
-- `[options]` are additional parameters that modify the request
-
-### Common Commands
-
-#### Display the intro animation
-```bash
-agas intro
-```
-
-#### Show help
-```bash
-agas --help
-```
-
-#### Show version
 ```bash
 agas --version
 ```
 
-#### Make a GET request
-```bash
-agas @get https://api.example.com/users
-```
+You should see something like "agas version 2.0.2".
 
-#### Make a POST request with data
-```bash
-agas @post https://api.example.com/users -d '{"name":"John Doe"}'
-```
+## Using Agas from the Command Line
 
-### Options in Detail
+The command line interface is where Agas really shines. You can make HTTP requests with just a few words.
 
-| Option | Short | Description | Example |
-|--------|-------|-------------|---------|
-| `--header` | `-H` | Add HTTP header | `-H "Authorization: Bearer token123"` |
-| `--data` | `-d` | Request body data | `-d '{"name":"John"}'` |
-| `--type` | `-t` | Content type | `-t json` |
-| `--params` | `-p` | URL parameters as JSON | `-p '{"page":1,"limit":10}'` |
-| `--verbose` | | Show detailed output | `--verbose` |
-| `--silent` | | Show only response body | `--silent` |
-| `--format` | | Output format | `--format json` |
+### Basic Pattern
 
-#### Header Option (`-H`, `--header`)
-Add HTTP headers to your request:
+Most commands follow this pattern:
 
 ```bash
-agas @get https://api.example.com/users -H "Authorization: Bearer token123" -H "Accept: application/json"
+agas <method> <url> [options]
 ```
 
-#### Data Option (`-d`, `--data`)
-Send data in the request body (for POST, PUT, PATCH):
+For example:
+```bash
+agas get https://api.example.com/users
+```
+
+If you don't specify a method, it assumes you want GET:
+```bash
+agas https://api.example.com/users
+```
+
+### Making Different Types of Requests
+
+**GET - Getting Data**
+
+This is for reading information from a server:
 
 ```bash
-agas @post https://api.example.com/users -d '{"name":"John Doe","email":"john@example.com"}'
+agas get https://api.example.com/users
 ```
 
-#### Content Type Option (`-t`, `--type`)
-Specify the content type of your request:
+**POST - Sending New Data**
+
+Use this when you want to create something new:
 
 ```bash
-agas @post https://api.example.com/users -t json -d '{"name":"John"}'
+agas post https://api.example.com/users -d '{"name":"Alice","email":"alice@example.com"}'
 ```
 
-Supported types:
-- `json` - application/json
-- `html` - text/html
-- `text` - text/plain
+**PUT - Updating Data**
 
-#### Parameters Option (`-p`, `--params`)
-Add URL query parameters:
+This replaces existing data:
 
 ```bash
-agas @get https://api.example.com/search -p '{"q":"javascript","sort":"recent"}'
+agas put https://api.example.com/users/123 -d '{"name":"Alice Smith"}'
 ```
 
-This will construct the URL as: `https://api.example.com/search?q=javascript&sort=recent`
+**PATCH - Partial Updates**
 
-#### Verbose Output (`--verbose`)
-Show detailed request and response information:
+When you only want to change part of something:
 
 ```bash
-agas @get https://api.example.com/users --verbose
+agas patch https://api.example.com/users/123 --json name="Alice Smith"
 ```
 
-#### Silent Mode (`--silent`)
-Output only the response body, useful for piping to other commands:
+**DELETE - Removing Data**
+
+To delete something:
 
 ```bash
-agas @get https://api.example.com/users --silent | jq '.data[0]'
+agas delete https://api.example.com/users/123
 ```
 
-#### Output Format (`--format`)
-Control how the response body is displayed:
+### Working with Headers
+
+Headers are extra information you send with your request. They're often used for authentication or telling the server what kind of data you're sending.
 
 ```bash
-agas @get https://api.example.com/users --format json
+# Add one header
+agas get https://api.example.com/users -H "Authorization: Bearer your-token-here"
+
+# Add multiple headers
+agas get https://api.example.com/users \
+  -H "Authorization: Bearer token" \
+  -H "Accept: application/json"
 ```
 
-Supported formats:
-- `json` - Format JSON responses with indentation
-- `raw` - Output raw response body
+### Sending Data
 
-### CLI Examples
+There are several ways to send data with your request:
 
-#### Basic GET request with headers
+**JSON Data (the most common)**
+
 ```bash
-agas @get https://api.example.com/users -H "Authorization: Bearer token123"
+# Send a complete JSON object
+agas post https://api.example.com/users -d '{"name":"Alice","age":30}'
+
+# Build JSON field by field
+agas post https://api.example.com/users --json name=Alice --json age=30
 ```
 
-#### POST request with JSON body
+**Form Data**
+
+Some APIs expect form-style data:
+
 ```bash
-agas @post https://api.example.com/users -d '{"name":"John Doe","email":"john@example.com"}'
+agas post https://api.example.com/login --form username=alice --form password=secret
 ```
 
-#### GET request with URL parameters
+### Adding Query Parameters
+
+Query parameters are the part of the URL after the question mark. Instead of building them yourself, let Agas do it:
+
 ```bash
-agas @get https://api.example.com/search -p '{"q":"typescript","page":1,"limit":25}'
+agas get https://api.example.com/search -q term=javascript -q limit=10
 ```
 
-#### PUT request with custom content type
+This creates: `https://api.example.com/search?term=javascript&limit=10`
+
+### Controlling Output
+
+**Pretty Printing**
+
+Make JSON responses easier to read:
+
 ```bash
-agas @put https://api.example.com/documents/123 -t text -d "This is a plain text document"
+agas get https://api.example.com/users --pretty
 ```
 
-#### DELETE request with authentication
+**Table View**
+
+If you get a list of items, display them as a table:
+
 ```bash
-agas @delete https://api.example.com/users/123 -H "Authorization: Bearer token123"
+agas get https://api.example.com/users --table
 ```
 
-#### Silent output for scripting
+**Verbose Mode**
+
+See all the details about your request and response:
+
 ```bash
-user_id=$(agas @get https://api.example.com/me --silent | jq -r '.id')
-echo "Current user ID: $user_id"
+agas get https://api.example.com/users --verbose
 ```
 
-## JavaScript/TypeScript API
+**Silent Mode**
 
-### Making Requests
+Only show the response body, nothing else:
 
-First, import the `Agas` class and create a client instance:
+```bash
+agas get https://api.example.com/users --silent
+```
 
-```typescript
+This is useful when you want to pipe the output to another program:
+
+```bash
+agas get https://api.example.com/users --silent | jq '.[] | .name'
+```
+
+### Saving Responses to Files
+
+Sometimes you want to keep the response:
+
+```bash
+agas get https://api.example.com/users -o users.json
+```
+
+### Setting Timeouts
+
+If a request is taking too long, you can set a maximum wait time (in milliseconds):
+
+```bash
+agas get https://slow-api.example.com --timeout 5000
+```
+
+This waits up to 5 seconds before giving up.
+
+### Saving and Reusing Requests
+
+If you make the same request often, save it and run it later:
+
+```bash
+# Save a request
+agas post https://api.example.com/users \
+  --json name=Alice \
+  --save create-user
+
+# Run it later
+agas run create-user
+```
+
+You can manage your saved requests:
+
+```bash
+# List all saved requests
+agas requests list
+
+# Delete a saved request
+agas requests delete create-user
+```
+
+### Viewing Request History
+
+Agas keeps track of the requests you make:
+
+```bash
+# See recent requests
+agas history
+
+# Clear the history
+agas history clear
+```
+
+### Configuration
+
+You can set defaults so you don't have to type them every time:
+
+```bash
+# Set a base URL
+agas config set baseURL https://api.example.com
+
+# Set a default timeout
+agas config set timeout 10000
+
+# See all your config
+agas config list
+
+# Get one specific value
+agas config get baseURL
+```
+
+## Using Agas in Your Code
+
+Besides the command line, you can use Agas in your JavaScript or TypeScript projects.
+
+### Getting Started
+
+First, import Agas:
+
+```javascript
 import { Agas } from '@medishn/agas';
 
+// Create a client
 const client = new Agas();
 ```
 
-#### GET Request
-```typescript
+### Making Requests
+
+**Simple GET Request**
+
+```javascript
 const response = await client.get('https://api.example.com/users');
-console.log(response.data); // Parsed response body
+console.log(response.data); // The actual data from the server
+console.log(response.status); // Like 200, 404, etc.
 ```
 
-#### POST Request
-```typescript
-const response = await client.post(
-  'https://api.example.com/users',
-  { name: 'John Doe', email: 'john@example.com' }
-);
+**POST Request with Data**
+
+```javascript
+const newUser = {
+  name: 'Alice',
+  email: 'alice@example.com'
+};
+
+const response = await client.post('https://api.example.com/users', newUser);
+console.log(response.data); // The server's response
 ```
 
-#### Request with Headers
-```typescript
+**Request with Headers**
+
+```javascript
 const response = await client.get('https://api.example.com/users', {
   headers: {
-    'Authorization': 'Bearer token123',
-    'Accept': 'application/json'
+    'Authorization': 'Bearer your-token-here'
   }
 });
 ```
 
-#### Request with URL Parameters
-```typescript
+**Request with Query Parameters**
+
+```javascript
 const response = await client.get('https://api.example.com/search', {
   params: {
-    q: 'typescript',
-    page: 1,
-    limit: 25
+    q: 'javascript',
+    limit: 10
   }
 });
 ```
 
-#### Using the Generic Request Method
-```typescript
-const response = await client.request('https://api.example.com/users', {
-  method: RequestMethod.POST,
+### Setting Up a Client with Defaults
+
+Instead of repeating the same settings, create a client with defaults:
+
+```javascript
+const client = new Agas({
+  baseURL: 'https://api.example.com',
+  timeout: 10000,
   headers: {
-    'Authorization': 'Bearer token123'
-  },
-  body: {
-    name: 'John Doe',
-    email: 'john@example.com'
-  },
-  timeout: 5000
+    'Authorization': 'Bearer your-token-here',
+    'Content-Type': 'application/json'
+  }
 });
+
+// Now you can make requests without repeating those settings
+const response = await client.get('/users');
 ```
 
-### Working with Response Data
+### Understanding Responses
 
-The response object contains a variety of useful properties:
+When you make a request, you get back an object with useful information:
 
-```typescript
+```javascript
 const response = await client.get('https://api.example.com/users');
 
-// Status code and status text
-console.log(`Status: ${response.status} ${response.statusText}`);
+// The actual data
+console.log(response.data);
+
+// HTTP status code (200, 404, 500, etc.)
+console.log(response.status);
+
+// Status message
+console.log(response.statusText); // "OK", "Not Found", etc.
 
 // Response headers
-console.log('Content-Type:', response.headers['content-type']);
+console.log(response.headers['content-type']);
 
-// Response body (parsed according to content type)
-console.log('Data:', response.data);
+// How long it took (in milliseconds)
+console.log(response.duration);
 
-// Response timing
-console.log(`Request took ${response.duration}ms`);
-
-// Original Response object
-const raw = response.response;
+// Unique ID for this request
+console.log(response.id);
 ```
 
-### Error Handling
+### Handling Errors
 
-Agas can handle errors in several ways:
+Things can go wrong - the network might fail, the server might be down, or you might send bad data. Always handle errors:
 
-```typescript
+```javascript
 try {
-  const response = await client.get('https://api.example.com/invalid');
+  const response = await client.get('https://api.example.com/users');
+  console.log('Success:', response.data);
 } catch (error) {
-  console.error('Request failed:', error.message);
-
-  // Access context information
-  if (error.context) {
-    console.error('Request ID:', error.context.requestId);
-    console.error('URL:', error.context.url);
-    console.error('Method:', error.context.method);
+  console.error('Something went wrong:', error.message);
+  
+  // If the server responded (even with an error)
+  if (error.response) {
+    console.error('Status:', error.response.status);
+    console.error('Data:', error.response.data);
   }
 }
 ```
 
-### Event System
+### Using Events
 
-Agas has an event system that allows you to monitor and respond to request lifecycle events:
+Agas lets you listen for events during the request lifecycle. This is useful for logging, monitoring, or debugging:
 
-```typescript
-// Listen for request start
-client.onRequest((data) => {
-  console.log(`Request started: ${data.method} ${data.url}`);
-  console.log('Headers:', data.headers);
-  console.log('Body:', data.body);
+```javascript
+// Listen when a request starts
+client.on('request', (data) => {
+  console.log(`Starting ${data.method} request to ${data.url}`);
 });
 
-// Listen for response
-client.onResponse((data) => {
-  console.log(`Response received: ${data.status}`);
-  console.log(`Response time: ${data.duration}ms`);
+// Listen when a response comes back
+client.on('response', (data) => {
+  console.log(`Got response with status ${data.status} in ${data.duration}ms`);
 });
 
 // Listen for errors
-client.onError((data) => {
-  console.error(`Request error: ${data.error.message}`);
+client.on('error', (data) => {
+  console.error(`Request failed: ${data.error.message}`);
 });
 
-// Make requests as normal
+// Make your request as normal
 const response = await client.get('https://api.example.com/users');
 ```
 
-### Advanced Configuration
+### Interceptors
 
-Agas supports a variety of configuration options:
+Interceptors let you modify requests before they're sent or responses before you get them back. This is powerful for things like adding auth tokens or transforming data:
 
-#### Setting Timeouts
-```typescript
-const response = await client.get('https://api.example.com/users', {
-  timeout: 5000 // 5 seconds
+**Request Interceptor**
+
+```javascript
+// Add a token to every request
+client.interceptors.request.use((config) => {
+  config.headers['Authorization'] = 'Bearer ' + getToken();
+  return config;
 });
 ```
 
-#### Custom Response Parsing
-```typescript
-// Skip automatic parsing
-const response = await client.get('https://api.example.com/users', {
-  parseResponse: false
-});
+**Response Interceptor**
 
-// Force a specific parse type
-const response = await client.get('https://api.example.com/users', {
-  responseType: 'text' // Force text response
+```javascript
+// Transform all responses
+client.interceptors.response.use((response) => {
+  // Add a timestamp to every response
+  response.data.receivedAt = new Date();
+  return response;
 });
 ```
 
-#### Redirect Handling
-```typescript
-const response = await client.get('https://api.example.com/users', {
-  followRedirects: false // Don't follow redirects
+### Advanced Options
+
+**Timeouts**
+
+```javascript
+const response = await client.get('https://slow-api.example.com', {
+  timeout: 5000 // Wait up to 5 seconds
 });
 ```
 
-#### Credentials and Security
-```typescript
-const response = await client.get('https://api.example.com/users', {
-  credentials: 'include', // Include cookies for cross-origin requests
-  allowInsecure: true // Allow insecure connections (not recommended for production)
+**Custom Validation**
+
+By default, Agas treats status codes 200-299 as successful. You can change this:
+
+```javascript
+const client = new Agas({
+  validateStatus: (status) => {
+    // Treat 200-399 as successful
+    return status >= 200 && status < 400;
+  }
 });
 ```
 
-## Use Cases
+**Response Types**
 
-### API Testing
+Tell Agas what kind of response you expect:
 
-Agas is excellent for testing APIs from the command line:
+```javascript
+// Get response as JSON (default for most APIs)
+const response = await client.get('/users', {
+  responseType: 'json'
+});
+
+// Get response as plain text
+const response = await client.get('/document', {
+  responseType: 'text'
+});
+
+// Let Agas figure it out (default)
+const response = await client.get('/data', {
+  responseType: 'auto'
+});
+```
+
+## Common Use Cases
+
+### Testing an API
+
+When you're building or testing an API, Agas makes it easy to send requests:
 
 ```bash
-# Test a REST API endpoint
-agas @get https://api.example.com/users --verbose
+# Test a GET endpoint
+agas get https://api.example.com/users --verbose
 
-# Create a new resource
-agas @post https://api.example.com/products -d '{"name":"New Product","price":29.99}'
+# Test creating a resource
+agas post https://api.example.com/users --json name=Test --json email=test@example.com
 
-# Check authentication
-agas @get https://api.example.com/me -H "Authorization: Bearer $TOKEN"
+# Test with authentication
+agas get https://api.example.com/protected -H "Authorization: Bearer token123"
+
+# Save common requests
+agas post https://api.example.com/users --json name=Test --save test-create
+agas run test-create
 ```
 
-### Backend Health Checks
+### Checking if Services are Running
 
-Monitor service health:
+Create a simple script to check if your services are healthy:
 
-```bash
-#!/usr/bin/env bun
+```javascript
 import { Agas } from '@medishn/agas';
 
-const client = new Agas();
 const services = [
   'https://api.example.com/health',
   'https://auth.example.com/health',
   'https://db.example.com/health'
 ];
 
-async function checkHealth() {
-  for (const url of services) {
-    try {
-      const response = await client.get(url, { timeout: 3000 });
-      console.log(`✅ ${url}: ${response.status} (${response.duration}ms)`);
-    } catch (error) {
-      console.error(`❌ ${url}: ${error.message}`);
-    }
+const client = new Agas({ timeout: 3000 });
+
+for (const url of services) {
+  try {
+    const response = await client.get(url);
+    console.log(`OK: ${url} (${response.duration}ms)`);
+  } catch (error) {
+    console.error(`FAILED: ${url} - ${error.message}`);
   }
 }
-
-checkHealth();
 ```
 
-### Data Fetching Scripts
+### Fetching Data for Processing
 
-Create scripts to fetch and process data:
+Get data from an API and process it:
 
-```typescript
+```javascript
 import { Agas } from '@medishn/agas';
-import { writeFile } from 'fs/promises';
 
 const client = new Agas();
 
-async function fetchAndSaveUserData() {
-  const response = await client.get('https://api.example.com/users', {
-    params: { limit: 1000 }
-  });
+// Get a list of users
+const response = await client.get('https://api.example.com/users', {
+  params: { limit: 100 }
+});
 
-  const users = response.data;
+// Process the data
+const emails = response.data.map(user => user.email);
 
-  // Process the data
-  const processedData = users.map(user => ({
-    id: user.id,
-    name: user.name,
-    email: user.email
-  }));
+console.log('Found emails:', emails);
 
-  // Save to file
-  await writeFile(
-    'users.json',
-    JSON.stringify(processedData, null, 2)
-  );
-
-  console.log(`Saved ${processedData.length} users to users.json`);
-}
-
-fetchAndSaveUserData().catch(console.error);
+// Save to a file
+await Bun.write('emails.txt', emails.join('\n'));
 ```
 
-## Best Practices
+### Building a Simple API Client
 
-### 1. Set Appropriate Timeouts
+Create a reusable client for your API:
 
-Configure timeouts based on the expected response time of the API:
+```javascript
+import { Agas } from '@medishn/agas';
 
-```typescript
+class MyAPIClient {
+  constructor(apiKey) {
+    this.client = new Agas({
+      baseURL: 'https://api.example.com',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
+  async getUsers() {
+    const response = await this.client.get('/users');
+    return response.data;
+  }
+
+  async createUser(userData) {
+    const response = await this.client.post('/users', userData);
+    return response.data;
+  }
+
+  async updateUser(id, userData) {
+    const response = await this.client.put(`/users/${id}`, userData);
+    return response.data;
+  }
+
+  async deleteUser(id) {
+    await this.client.delete(`/users/${id}`);
+  }
+}
+
+// Use it
+const api = new MyAPIClient('your-api-key');
+const users = await api.getUsers();
+```
+
+## Tips and Best Practices
+
+### Always Handle Errors
+
+Network requests can fail for many reasons. Always wrap your requests in try-catch blocks:
+
+```javascript
+try {
+  const response = await client.get('/data');
+  // Handle success
+} catch (error) {
+  // Handle error
+  console.error('Request failed:', error.message);
+}
+```
+
+### Set Reasonable Timeouts
+
+Don't let requests hang forever. Set a timeout based on what you expect:
+
+```javascript
 // Quick local API
 client.get('http://localhost:3000/data', { timeout: 1000 });
 
-// Potentially slower external API
+// External API that might be slower
 client.get('https://external-api.com/data', { timeout: 10000 });
 ```
 
-### 2. Handle Rate Limits with Events
+### Use Base URLs
 
-Use the event system to track rate limits:
+If you're making many requests to the same API, set a base URL:
 
-```typescript
-let rateLimitRemaining = Infinity;
-
-client.onResponse((data) => {
-  const headers = data.headers;
-  if (headers['x-rate-limit-remaining']) {
-    rateLimitRemaining = parseInt(headers['x-rate-limit-remaining']);
-  }
+```javascript
+const client = new Agas({
+  baseURL: 'https://api.example.com'
 });
 
-async function fetchWithRateLimit(url) {
-  if (rateLimitRemaining < 5) {
-    console.warn('Approaching rate limit, waiting...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
-  }
-  return client.get(url);
-}
+// Now you can use relative paths
+await client.get('/users');
+await client.get('/posts');
 ```
 
-### 3. Use Request IDs for Tracking
+### Don't Put Secrets in Your Code
 
-For applications making many parallel requests, track them with request IDs:
+Never hardcode API keys or tokens:
 
-```typescript
-const response = await client.get('https://api.example.com/data', {
-  requestId: 'fetch-user-data-' + Date.now()
-});
-```
-
-### 4. Set Appropriate Content-Type Headers
-
-Explicitly set content types when sending data:
-
-```typescript
-const response = await client.post('https://api.example.com/users', userData, {
+```javascript
+// Bad
+const client = new Agas({
   headers: {
-    'Content-Type': 'application/json'
+    'Authorization': 'Bearer abc123secret'
+  }
+});
+
+// Good - use environment variables
+const client = new Agas({
+  headers: {
+    'Authorization': `Bearer ${process.env.API_KEY}`
   }
 });
 ```
+
+### Use Verbose Mode for Debugging
+
+When something isn't working, use verbose mode to see what's happening:
+
+```bash
+agas get https://api.example.com/users --verbose
+```
+
+This shows you the request headers, response headers, and other details that help you figure out what's wrong.
 
 ## Troubleshooting
 
-### Common Issues and Solutions
+### "Command not found"
 
-#### Request Timeout
+If you get this error after installing, your PATH might not be set up correctly.
 
-**Problem**: The request is timing out.
-
-**Solution**: Increase the timeout value:
-```typescript
-await client.get('https://api.example.com/data', { timeout: 30000 }); // 30 seconds
+**On Mac or Linux:**
+```bash
+export PATH="$PATH:$HOME/.local/bin"
 ```
 
-#### CORS Errors in Browser
+Add that line to your `~/.bashrc` or `~/.zshrc` file to make it permanent.
 
-**Problem**: CORS errors when using Agas in browser environments.
+**On Windows:**
+The installer should handle this, but you might need to restart your terminal or computer.
 
-**Solution**: Set appropriate credentials and headers:
-```typescript
-await client.get('https://api.example.com/data', {
-  credentials: 'include',
-  headers: {
-    'Origin': window.location.origin
-  }
-});
+### Request Timeout
+
+If requests are timing out:
+
+1. Check your internet connection
+2. Make sure the URL is correct
+3. Try increasing the timeout: `--timeout 30000`
+4. Check if there's a firewall blocking the request
+
+### "Invalid JSON"
+
+If you're getting JSON parsing errors:
+
+1. Make sure the API is actually returning JSON
+2. Try getting the response as text first: `--responseType text`
+3. Check if the API requires specific headers
+
+### SSL Certificate Errors
+
+If you're getting certificate errors with HTTPS:
+
+1. Make sure your system's date and time are correct
+2. Update your system's certificate store
+3. Only as a last resort for testing: use the allow insecure option (not recommended for production)
+
+## Getting Help
+
+If you need more help:
+
+- Check the documentation: https://github.com/m-mdy-m/agas
+- Report bugs or ask questions: https://github.com/m-mdy-m/agas/issues
+- Read the changelog for updates: https://github.com/m-mdy-m/agas/blob/main/docs/CHANGELOG.md
+
+## Quick Reference
+
+**Common Commands:**
+```bash
+agas <url>                              # GET request
+agas get <url>                          # Explicit GET
+agas post <url> -d '{"key":"value"}'    # POST with data
+agas get <url> -H "Key: Value"          # Add header
+agas get <url> -q key=value             # Add query param
+agas get <url> --pretty                 # Pretty print
+agas get <url> --table                  # Table view
+agas get <url> -o file.json             # Save to file
+agas --save name                        # Save request
+agas run name                           # Run saved request
+agas history                            # View history
+agas config list                        # View config
+agas --version                          # Show version
+agas --help                             # Show help
 ```
 
-#### "Invalid JSON" Errors
-
-**Problem**: Error parsing JSON response.
-
-**Solution**: Force response type to text if the API is returning malformed JSON:
-```typescript
-const response = await client.get('https://api.example.com/data', {
-  responseType: 'text'
-});
-const data = JSON.parse(response.data.trim());
-```
-
-#### Large Response Bodies
-
-**Problem**: Memory issues with large responses.
-
-**Solution**: Consider turning off automatic parsing for large responses:
-```typescript
-const response = await client.get('https://api.example.com/large-data', {
-  parseResponse: false
-});
-// Process the response stream manually
-const reader = response.response.body.getReader();
-```
-
-## Reference
-
-### Request Methods
-
-Agas supports the following HTTP methods:
-
-- `GET`: Retrieve resources
-- `POST`: Create resources or submit data
-- `PUT`: Update resources by replacing them
-- `DELETE`: Remove resources
-- `PATCH`: Update resources partially
-- `HEAD`: Retrieve headers only
-- `OPTIONS`: Retrieve supported methods
-- And other less common methods: `SEARCH`, `PROPFIND`, `PROPPATCH`, `MKCOL`, `COPY`, `MOVE`, `LOCK`, `UNLOCK`
-
-### Response Object Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | string | Unique request identifier |
-| `status` | number | HTTP status code |
-| `statusText` | string | HTTP status text |
-| `headers` | object | Response headers |
-| `data` | any | Parsed response body |
-| `duration` | number | Request duration in milliseconds |
-| `ok` | boolean | Whether status is in the 200-299 range |
-| `redirected` | boolean | Whether request was redirected |
-| `url` | string | Final URL (after redirects) |
-| `type` | string | Response content type |
-| `response` | Response | Original Response object |
-
-### Event Types
-
-#### Request Event
-Triggered when a request is initiated:
-
-```typescript
-client.onRequest((data) => {
-  // data contains:
-  // - id: string
-  // - method: string
-  // - url: string
-  // - headers?: Record<string, string>
-  // - body?: string
-  // - start: number (timestamp)
-});
-```
-
-#### Response Event
-Triggered when a response is received:
-
-```typescript
-client.onResponse((data) => {
-  // data contains:
-  // - id: string
-  // - status: number
-  // - body: string
-  // - duration: number
-});
-```
-
-#### Error Event
-Triggered when a request fails:
-
-```typescript
-client.onError((data) => {
-  // data contains:
-  // - id: string
-  // - error: Error
-});
-```
-
----
-
-For more information, examples, or to report issues, please visit the [GitHub repository](https://github.com/m-mdy-m/agas).
+**Common Options:**
+- `-H, --header` - Add header
+- `-q, --query` - Add query parameter
+- `-d, --data` - Request body
+- `--json` - Add JSON field
+- `-o, --output` - Save to file
+- `--pretty` - Format output
+- `-v, --verbose` - Show details
+- `--silent` - Only show body
+- `--timeout` - Set timeout
+- `--table` - Table display
+- `--save` - Save request

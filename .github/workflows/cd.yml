@@ -1,10 +1,9 @@
-name: Build and Release Binaries
+name: Docker Build & Publish
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
+    branches: [main]
+    tags: ['v*.*.*']
 
 jobs:
   build-binaries:
@@ -22,7 +21,7 @@ jobs:
             target: linux-arm64
             bun-target: bun-linux-arm64
             ext: ''
-          
+
           # macOS builds
           - os: macos-latest
             target: darwin-x64
@@ -32,7 +31,7 @@ jobs:
             target: darwin-arm64
             bun-target: bun-darwin-arm64
             ext: ''
-          
+
           # Windows builds
           - os: windows-latest
             target: windows-x64
@@ -85,7 +84,6 @@ jobs:
           path: |
             agas-${{ github.ref_name }}-${{ matrix.target }}.*
             agas-${{ matrix.target }}.sha256
-
   create-release:
     name: Create GitHub Release
     needs: build-binaries
@@ -125,34 +123,6 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-npm:
-    name: Publish to NPM
-    needs: create-release
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build package
-        run: bun run build:all
-
-      - name: Publish to NPM
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
   publish-docker:
     name: Publish Docker Image
     needs: create-release
@@ -168,22 +138,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            bitsgenix/agas
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: bitsgenix/agas
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -195,4 +167,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-

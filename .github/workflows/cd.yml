@@ -91,13 +91,20 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build binary
+      - name: Build binary (Unix)
+        if: runner.os != 'Windows'
         run: |
           bun build ./bin/agas.ts \
             --compile \
             --outfile ./agas-${{ matrix.target }}${{ matrix.ext }} \
             --target ${{ matrix.bun-target }} \
             --minify
+        shell: bash
+
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
+        run: bun build ./bin/agas.ts --compile --outfile ./agas-${{ matrix.target }}${{ matrix.ext }} --target ${{ matrix.bun-target }} --minify
+        shell: pwsh
 
       - name: Create checksum
         shell: bash

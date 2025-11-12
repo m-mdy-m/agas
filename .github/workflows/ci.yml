@@ -1,15 +1,44 @@
-name: CI
+name: Build & Publish
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    
+  build-binaries:
+    name: Build Binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Linux builds
+          - os: ubuntu-latest
+            target: linux-x64
+            bun-target: bun-linux-x64
+            ext: ''
+          - os: ubuntu-latest
+            target: linux-arm64
+            bun-target: bun-linux-arm64
+            ext: ''
+
+          # macOS builds
+          - os: macos-latest
+            target: darwin-x64
+            bun-target: bun-darwin-x64
+            ext: ''
+          - os: macos-latest
+            target: darwin-arm64
+            bun-target: bun-darwin-arm64
+            ext: ''
+
+          # Windows builds
+          - os: windows-latest
+            target: windows-x64
+            bun-target: bun-windows-x64
+            ext: '.exe'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,23 +51,120 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run tests
-        run: bun test
+      - name: Build binary
+        run: |
+          bun build ./bin/agas.ts \
+            --compile \
+            --outfile ./agas-${{ matrix.target }}${{ matrix.ext }} \
+            --target ${{ matrix.bun-target }} \
+            --minify
 
-      - name: Build
-        run: bun run build:all
+      - name: Create checksum
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            certutil -hashfile agas-${{ matrix.target }}${{ matrix.ext }} SHA256 | findstr /v "hash" > agas-${{ matrix.target }}.sha256
+          else
+            shasum -a 256 agas-${{ matrix.target }}${{ matrix.ext }} > agas-${{ matrix.target }}.sha256
+          fi
 
-  lint:
+      - name: Package binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          tar -czf agas-${{ github.ref_name }}-${{ matrix.target }}.tar.gz agas-${{ matrix.target }}${{ matrix.ext }}
+
+      - name: Package binary (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Compress-Archive -Path agas-${{ matrix.target }}${{ matrix.ext }} -DestinationPath agas-${{ github.ref_name }}-${{ matrix.target }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: |
+            agas-${{ github.ref_name }}-${{ matrix.target }}.*
+            agas-${{ matrix.target }}.sha256
+  create-release:
+    name: Create GitHub Release
+    needs: build-binaries
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
         with:
-          bun-version: latest
+          name: binaries
+          path: ./binaries
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Create checksums file
+        run: |
+          cd binaries
+          cat *.sha256 > checksums.txt
+          rm *.sha256
+
+      - name: Extract release notes
+        id: extract_notes
+        run: |
+          VERSION="${{ github.ref_name }}"
+          sed -n "/## \[${VERSION#v}\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          body_path: release_notes.md
+          files: binaries/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  publish-docker:
+    name: Publish Docker Image
+    needs: create-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            bitsgenix/agas
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

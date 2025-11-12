@@ -1,174 +1,161 @@
 # Agas
 
-<div align="center">
-
-```
-         A G A S
-```
+A fast and simple HTTP client for the terminal and JavaScript. Built with Bun.
 
 [![npm version](https://img.shields.io/npm/v/@medishn/agas.svg)](https://www.npmjs.com/package/@medishn/agas)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Bun Compatible](https://img.shields.io/badge/Bun-Compatible-orange.svg)](https://bun.sh)
 [![Docker](https://img.shields.io/badge/Docker-Available-blue.svg)](https://hub.docker.com/r/bitsgenix/agas)
 
-</div>
-
-Agas is a minimal, CLI-friendly HTTP client powered by Bun. It provides a simple and intuitive interface for making HTTP requests directly from your terminal or within your JavaScript/TypeScript applications.
-
 ## Features
 
-- **Lightweight and Fast**: Built on Bun for performance
-- **Beautiful CLI Interface**: With colors and loading spinners
-- **Event-driven Architecture**: Subscribe to request and response events
-- **Modern HTTP Features**: JSON, FormData, streaming, timeouts, and more
-- **Easy to Use API**: Simple methods for common HTTP verbs
-- **Type-safe**: Written in TypeScript with full type definitions
-- **Docker Support**: Run in containers without dependencies
-
+- Fast performance with Bun runtime
+- Simple command line interface
+- Works as a JavaScript library
+- Request history and saved requests
+- Pretty output and table display
+- Docker support
 
 ## Installation
 
-### Package Managers
-
 ```bash
-# NPM
-npm install -g agas
+# npm
+npm install -g @medishn/agas
 
-# Yarn
-yarn global add agas
+# yarn
+yarn global add @medishn/agas
 
-# Bun
-bun install -g agas
-```
+# bun
+bun install -g @medishn/agas
 
-### Docker
-
-```bash
-# Pull from Docker Hub
-docker pull bitsgenix/agas:latest
-
-# Run
-docker run --rm bitsgenix/agas get https://api.github.com
-```
-
-### Binary
-
-```bash
-# Linux/macOS
+# Install script (Linux/Mac)
 curl -fsSL https://raw.githubusercontent.com/m-mdy-m/agas/main/scripts/install.sh | sh
 
-# Windows
-irm  https://raw.githubusercontent.com/m-mdy-m/agas/main/scripts/install.ps1 | iex
+# Install script (Windows)
+irm https://raw.githubusercontent.com/m-mdy-m/agas/main/scripts/install.ps1 | iex
+
+# Docker
+docker pull bitsgenix/agas:latest
 ```
 
 ## Quick Start
 
-### CLI
+### Command Line
 
 ```bash
-# Simple GET request
-agas get https://api.github.com/users/octocat
+# GET request
+agas https://api.github.com/users/octocat
 
-# POST with JSON data
-agas post https://httpbin.org/post \
-  --json name=John \
-  --json email=john@example.com
+# POST with JSON
+agas post https://httpbin.org/post --json name=John
 
-# With authentication
-agas get https://api.github.com/user \
-  -H "Authorization: Bearer YOUR_TOKEN"
+# With headers
+agas get https://api.github.com/user -H "Authorization: Bearer token"
 
-# Pretty printed, table format
-agas get https://api.github.com/users --pretty --table
+# Pretty output
+agas get https://api.github.com/users --pretty
 
-# Save response to file
-agas get https://api.github.com/users -o users.json
-
-# Save request for later
-agas post https://api.example.com/users \
-  --json name=John \
-  --save create-user
+# Save request
+agas post https://api.example.com/users --json name=Test --save create-user
 
 # Run saved request
 agas run create-user
 ```
 
-### API
+### JavaScript
 
-```typescript
+```javascript
 import { Agas } from '@medishn/agas';
 
-// Create client
 const client = new Agas({
   baseURL: 'https://api.example.com',
-  headers: {
-    'Authorization': 'Bearer token123'
-  }
+  headers: { 'Authorization': 'Bearer token' }
 });
 
-// Make request
 const response = await client.get('/users');
 console.log(response.data);
+```
 
-// With interceptors
-client.interceptors.request.use((config) => {
-  console.log('Sending:', config.method, config.url);
-  return config;
+## CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `-H, --header` | Add request header |
+| `-q, --query` | Add query parameter |
+| `-d, --data` | Request body data |
+| `--json` | Add JSON field |
+| `-o, --output` | Save response to file |
+| `--pretty` | Pretty print JSON |
+| `-v, --verbose` | Show detailed output |
+| `--silent` | Show only response body |
+| `--timeout` | Request timeout in ms |
+| `--save` | Save request for later |
+| `--table` | Display as table |
+
+## API Usage
+
+```javascript
+import { Agas } from '@medishn/agas';
+
+const client = new Agas({
+  baseURL: 'https://api.example.com',
+  timeout: 10000,
+  headers: { 'Authorization': 'Bearer token' }
 });
 
-// Listen to events
+// Make requests
+await client.get('/users');
+await client.post('/users', { name: 'Alice' });
+await client.put('/users/123', { name: 'Alice Smith' });
+await client.delete('/users/123');
+
+// With options
+await client.get('/users', {
+  params: { page: 1, limit: 10 },
+  headers: { 'Accept': 'application/json' }
+});
+
+// Error handling
+try {
+  const response = await client.get('/users');
+} catch (error) {
+  console.error(error.message);
+}
+
+// Events
+client.on('request', (data) => {
+  console.log(`Request: ${data.method} ${data.url}`);
+});
+
 client.on('response', (data) => {
-  console.log('Response:', data.status, data.duration + 'ms');
+  console.log(`Response: ${data.status} in ${data.duration}ms`);
+});
+
+// Interceptors
+client.interceptors.request.use((config) => {
+  config.headers['X-Custom'] = 'value';
+  return config;
 });
 ```
 
-## Contributing
+## Documentation
 
-Contributions, suggestions, and improvements are very welcome!
-Please see the [Contributing Guide](./docs/CONTRIBUTING.md) to get started.
-
-Also, make sure to check out our [Code of Conduct](./docs/CODE_OF_CONDUCT.md).
-
-## Security
-
-If you discover any security-related issues, please read our [Security Policy](./docs/SECURITY.md) for guidance on responsible disclosure.
-
-## Getting Started
-
-Check out the [User Guide](./User_Guide.md) to learn how to use Agas effectively.
-
-## Changelog
-
-You can view the list of recent changes in the [CHANGELOG](./docs/CHANGELOG.md).
-
-## Acknowledgments
-
-- Built with [Bun](https://bun.sh)
-- Inspired by [HTTPie](https://httpie.io) and [curl](https://curl.se)
-- Event system powered by [@glandjs/emitter](https://github.com/glandjs/emitter)
-
-## Stats
-
-<div align="center">
-
-![GitHub stars](https://img.shields.io/github/stars/m-mdy-m/agas?style=social)
-![GitHub forks](https://img.shields.io/github/forks/m-mdy-m/agas?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/m-mdy-m/agas?style=social)
-
-</div>
+- [User Guide](./User_Guide.md) - Complete guide with examples
+- [Changelog](./docs/CHANGELOG.md) - Version history
+- [Contributing](./docs/CONTRIBUTING.md) - How to contribute
+- [Security](./docs/SECURITY.md) - Security policy
+- [Binary Distribution](./docs/BINARY_DISTRIBUTION.md) - Installation details
 
 ## Links
 
-- **NPM**: https://www.npmjs.com/package/@medishn/agas
-- **Docker Hub**: https://hub.docker.com/r/bitsgenix/agas
-- **Documentation**: https://github.com/m-mdy-m/agas/tree/main/docs
-- **Issues**: https://github.com/m-mdy-m/agas/issues
-- **Changelog**: [CHANGELOG.md](docs/CHANGELOG.md)
+- NPM: https://www.npmjs.com/package/@medishn/agas
+- Docker Hub: https://hub.docker.com/r/bitsgenix/agas
+- Issues: https://github.com/m-mdy-m/agas/issues
 
-<div align="center">
+## License
 
-**[⬆ back to top](#agas)**
+MIT License - Copyright (c) 2024-2025 Mahdi
 
-Made with ❤️ by [Mahdi](https://github.com/m-mdy-m)
+---
 
-</div>
+Made by [Mahdi](https://github.com/m-mdy-m)

@@ -5,55 +5,18 @@ on:
     branches: [main,develop]
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
-
+permissions:
+  contents: write
+  packages: write
 jobs:
-  create-release:
-    name: Create GitHub Release
-    needs: build-binaries
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: binaries
-          path: ./binaries
-
-      - name: Create checksums file
-        run: |
-          cd binaries
-          cat *.sha256 > checksums.txt
-          rm *.sha256
-
-      - name: Extract release notes
-        id: extract_notes
-        run: |
-          VERSION="${{ github.ref_name }}"
-          sed -n "/## \[${VERSION#v}\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Release ${{ github.ref_name }}
-          body_path: release_notes.md
-          files: binaries/*
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # Job 1: Build binaries for all platforms
   build-binaries:
-    name: Build Binaries
+    name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
-          # Linux builds
           - os: ubuntu-latest
             target: linux-x64
             bun-target: bun-linux-x64
@@ -62,8 +25,6 @@ jobs:
             target: linux-arm64
             bun-target: bun-linux-arm64
             ext: ''
-
-          # macOS builds
           - os: macos-latest
             target: darwin-x64
             bun-target: bun-darwin-x64
@@ -72,8 +33,6 @@ jobs:
             target: darwin-arm64
             bun-target: bun-darwin-arm64
             ext: ''
-
-          # Windows builds
           - os: windows-latest
             target: windows-x64
             bun-target: bun-windows-x64
@@ -91,8 +50,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build binary (Unix)
-        if: runner.os != 'Windows'
+      - name: Build binary
         run: |
           bun build ./bin/agas.ts \
             --compile \
@@ -101,73 +59,156 @@ jobs:
             --minify
         shell: bash
 
-      - name: Build binary (Windows)
-        if: runner.os == 'Windows'
-        run: bun build ./bin/agas.ts --compile --outfile ./agas-${{ matrix.target }}${{ matrix.ext }} --target ${{ matrix.bun-target }} --minify
-        shell: pwsh
+      - name: Create checksum (Unix)
+        if: runner.os != 'Windows'
+        run: shasum -a 256 agas-${{ matrix.target }}${{ matrix.ext }} > agas-${{ matrix.target }}.sha256
+        shell: bash
 
       - name: Create checksum (Windows)
         if: runner.os == 'Windows'
-        shell: pwsh
         run: |
-          certutil -hashfile agas-${{ matrix.target }}${{ matrix.ext }} SHA256 | ForEach-Object { ($_ -split ' ')[-1] } > agas-${{ matrix.target }}.sha256
-
-      - name: Create checksum (Unix)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: shasum -a 256 agas-${{ matrix.target }}${{ matrix.ext }} > agas-${{ matrix.target }}.sha256
+          $hash = (Get-FileHash -Algorithm SHA256 agas-${{ matrix.target }}${{ matrix.ext }}).Hash.ToLower()
+          "$hash  agas-${{ matrix.target }}${{ matrix.ext }}" | Out-File -Encoding ASCII agas-${{ matrix.target }}.sha256
+        shell: pwsh
 
       - name: Package binary (Unix)
         if: runner.os != 'Windows'
-        run: |
-          tar -czf agas-${{ github.ref_name }}-${{ matrix.target }}.tar.gz agas-${{ matrix.target }}${{ matrix.ext }}
+        run: tar -czf agas-${{ github.ref_name }}-${{ matrix.target }}.tar.gz agas-${{ matrix.target }}${{ matrix.ext }}
 
       - name: Package binary (Windows)
         if: runner.os == 'Windows'
-        run: |
-          Compress-Archive -Path agas-${{ matrix.target }}${{ matrix.ext }} -DestinationPath agas-${{ github.ref_name }}-${{ matrix.target }}.zip
+        run: Compress-Archive -Path agas-${{ matrix.target }}${{ matrix.ext }} -DestinationPath agas-${{ github.ref_name }}-${{ matrix.target }}.zip
 
-      - name: Upload artifact
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries-${{ github.ref_name }}-${{ matrix.target }}
+          name: binary-${{ matrix.target }}
           path: |
             agas-${{ github.ref_name }}-${{ matrix.target }}.*
             agas-${{ matrix.target }}.sha256
           if-no-files-found: error
-  publish-docker:
-    name: Publish Docker Image
-    needs: create-release
+          retention-days: 1
+
+  # Job 2: Create GitHub Release and upload binaries
+  create-release:
+    name: Create Release
+    needs: build-binaries
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+          pattern: binary-*
+          merge-multiple: true
+
+      - name: Create checksums file
+        run: |
+          cd binaries
+          cat *.sha256 > checksums.txt
+          rm *.sha256
+          ls -lh
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Extract release notes
+        id: extract_notes
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          if grep -q "## \[${VERSION}\]" docs/CHANGELOG.md; then
+            sed -n "/## \[${VERSION}\]/,/## \[/p" docs/CHANGELOG.md | sed '$d' > release_notes.md
+          else
+            echo "Release ${{ github.ref_name }}" > release_notes.md
+            echo "" >> release_notes.md
+            echo "See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/docs/CHANGELOG.md) for details." >> release_notes.md
+          fi
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          body_path: release_notes.md
+          files: binaries/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 3: Publish to NPM
+  publish-npm:
+    name: Publish to NPM
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build package
+        run: bun run build:all
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # Job 4: Build and publish Docker image
+  publish-docker:
+    name: Publish Docker Image
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            bitsgenix/agas
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: bitsgenix/agas
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
 
       - name: Build and push
         uses: docker/build-push-action@v5

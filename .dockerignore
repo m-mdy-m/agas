@@ -1,12 +1,18 @@
 node_modules
 dist
-
-tests/
-cli/
-
+build
 .git
-.gitignore
-Dockerfile*
-docker-compose*.yml
+.github
+tests
+docs
+examples
+
+*.md
+!README.md
 
 .DS_Store
+.env
+.env.local
+
+docker-compose*.yml
+Dockerfile*

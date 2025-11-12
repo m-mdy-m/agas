@@ -1,0 +1,24 @@
+# Source files
+src/
+bin/
+tests/
+examples/
+
+# Config files
+tsconfig.json
+.gitignore
+.dockerignore
+docker-compose.yml
+Dockerfile
+.github/
+
+# Documentation source
+docs/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Keep only what's needed
+!dist/
+!README.md
+!LICENSE

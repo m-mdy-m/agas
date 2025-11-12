@@ -1,6 +1,6 @@
 {
   "name": "@medishn/agas",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "Agas is a minimal, HTTP client for the Terminal.",
   "type": "module",
   "main": "dist/index",

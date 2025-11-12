@@ -20,7 +20,7 @@ export interface RequestConfig {
   timeout?: number;
   validateStatus?: (status: number) => boolean;
   responseType?: TResponse;
-  credentials?: RequestCredentials;
+  credentials?: any;
 }
 
 export interface ResponseConfig<T = any> {

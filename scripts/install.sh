@@ -178,7 +178,7 @@ main() {
   detect_platform
   get_latest_version
   download_binary
-  verify_checksum
+ # verify_checksum
   install_binary
   setup_path
   

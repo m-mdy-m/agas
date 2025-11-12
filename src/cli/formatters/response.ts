@@ -1,6 +1,9 @@
 import type { ResponseConfig } from "../../types"
 import type {FormatOptions} from "../types"
-import {colors,getStatusColor} from "./colors"
+import {colors,getStatusColor,noColors} from "./colors"
+import {formatJSON} from "./json"
+import {formatTable} from "./table"
+import {formatHeaders} from './headers'
 export async function formatResponse(response: ResponseConfig, options: FormatOptions = {}) {
   const {
     colors: useColors = true,

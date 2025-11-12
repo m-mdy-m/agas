@@ -1,5 +1,5 @@
 import { EventEmitter } from "@glandjs/emitter"
-import {AgasConfig,InterceptorManager,RequestConfig,ResponseConfig} from "./types"
+import {AgasConfig,InterceptorManager,RequestConfig,ResponseConfig,Interceptor,TResponse} from "../types"
 export class Agas {
     private config!:AgasConfig;
     private emitter = new EventEmitter()
@@ -12,7 +12,7 @@ export class Agas {
         baseURL:config?.baseURL ?? "",
         timeout:config?.timeout ?? 300000,
         headers:config?.headers ?? {},
-        validateStatus:config?.validateStatus ?? ((s)=> s >=200 && s<300),
+        validateStatus:config?.validateStatus ?? ((s:any)=> s >=200 && s<300),
         maxRedirects: config?.maxRedirects ?? 5,
         responseType: config?.responseType??'auto'
       }
@@ -32,32 +32,32 @@ export class Agas {
     try {
       const mergedConfig = this.mergeConfig(config);
       let finalConfig = await this.applyRequestInterceptors(mergedConfig);
-      const url = this.buildURL(finalConfig.url, finalConfig.params);
+      const url = this.buildURL(finalConfig?.url, finalConfig?.params);
 
       // Emit request event
       this.emitter.emit('request', {
         id: requestId,
-        method: finalConfig.method,
+        method: finalConfig?.method,
         url,
-        headers: finalConfig.headers,
-        data: finalConfig.data,
+        headers: finalConfig?.headers,
+        data: finalConfig?.data,
       });
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), finalConfig.timeout);
+      const timeoutId = setTimeout(() => controller.abort(), finalConfig?.timeout);
 
       try {
         console.log("url:",url)
         const response = await fetch(url, {
-          method: finalConfig.method,
-          headers: finalConfig.headers,
-          body: this.serializeBody(finalConfig.data, finalConfig.headers),
+          method: finalConfig?.method,
+          headers: finalConfig?.headers,
+          body: this.serializeBody(finalConfig?.data, finalConfig?.headers),
           signal: controller.signal,
           redirect: 'follow',
-          credentials: finalConfig.credentials,
+          credentials: finalConfig?.credentials,
         });
 
         clearTimeout(timeoutId);
-        const data = await this.parseResponse<T>(response, finalConfig.responseType);
+        const data = await this.parseResponse<T>(response, finalConfig?.responseType);
         const duration = performance.now() - startTime;
 
         let agasResponse: ResponseConfig<T> = {
@@ -73,7 +73,7 @@ export class Agas {
 
         agasResponse = await this.applyResponseInterceptors(agasResponse);
 
-        if (!finalConfig.validateStatus(response.status)) {
+        if (!finalConfig?.validateStatus(response.status)) {
           throw new AgasError('Request failed with status ' + response.status, agasResponse);
         }
 
@@ -131,7 +131,7 @@ export class Agas {
   /**
    * PATCH request
    */
-  patch<T = any>(url: string, data?: any, config?: Omit<RequestConfig, 'method' | 'url' | 'data'>): Promise<Response<T>> {
+  patch<T = any>(url: string, data?: any, config?: Omit<RequestConfig, 'method' | 'url' | 'data'>): Promise<ResponseConfig<T>> {
     return this.request<T>({ ...config, method: 'PATCH', url, data });
   }
 
@@ -200,7 +200,7 @@ export class Agas {
     return urlObj.toString();
   }
 
-  private serializeBody(data: any, headers: Record<string, string>): BodyInit | null | undefined {
+  private serializeBody(data: any, headers: Record<string, string>): any | null | undefined {
     if (!data) return undefined;
 
     if (data instanceof FormData || data instanceof URLSearchParams || 
@@ -224,8 +224,8 @@ export class Agas {
     return String(data);
   }
 
-  private async parseResponse<T>(response: globalThis.ResponseConfig, responseType: string): Promise<T> {
-    if (response.status === 204 || response.headers.get('content-length') === '0') {
+  private async parseResponse<T>(response: ResponseConfig<any>, responseType: string): Promise<T> {
+    if (response.status === 204 || response?.headers.get('content-length') === '0') {
       return null as T;
     }
 
@@ -314,7 +314,7 @@ class RequestInterceptorManager implements InterceptorManager<RequestConfig> {
 }
 
 class ResponseInterceptorManager implements InterceptorManager<ResponseConfig> {
-  handlers: Interceptor<Response>[] = [];
+  handlers: Interceptor<ResponseConfig>[] = [];
 
   use(
     fulfilled?: (value: ResponseConfig) => ResponseConfig | Promise<ResponseConfig>,

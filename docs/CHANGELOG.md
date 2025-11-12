@@ -131,3 +131,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed old event system
 - Removed deprecated options
 - Removed unnecessary dependencies
+
+## [2.0.2] - 2025-11-12
+
+### Added
+
+* New response formatters: JSON and table helpers, and header formatter.
+* Minor CLI import cleanup.
+
+### Changed
+
+* Simplified history/saved-request constants.
+* Installer script: `verify_checksum` temporarily disabled (installer flow relaxed).
+
+### Fixed
+
+* Defensive checks and optional chaining across core request flow to avoid crashes when config fields are missing.
+* Safer response parsing and body serialization handling.
+* Corrected interceptor generics and several TypeScript signatures (e.g., `patch` return type).
+* Minor import/format fixes in `bin/agas.ts` and formatter modules.

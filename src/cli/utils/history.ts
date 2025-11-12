@@ -1,5 +1,5 @@
 import type { RequestHistory } from '../types';
-import {MAX_HISTORY_SIZE,HISTORY_FILE,AGAS_DIR} from "./constant"
+import {MAX_HISTORY_SIZE,HISTORY_FILE} from "./constant"
 
 export async function saveHistory(entry: RequestHistory): Promise<void> {
   try {

@@ -1,5 +1,5 @@
 import type { SavedRequest } from '../types';
-import {AGAS_DIR,REQUESTS_FILE} from "./constant"
+import {REQUESTS_FILE} from "./constant"
 
 export async function saveRequest(request: SavedRequest): Promise<void> {
   try {

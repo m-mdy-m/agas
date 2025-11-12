@@ -1,10 +1,9 @@
 #!/usr/bin/env bun
-import { parseArgs } from 'node:util';
 import { Agas } from '../src';
-import { formatResponse } from '../src/cli/formatters';
+import { formatResponse} from '../src/cli/formatters';
 import { loadConfig, saveConfig } from '../src/cli/utils/config';
 import { saveHistory, showHistory } from '../src/cli/utils/history';
-import { parseBody, parseHeaders, parseQuery, parseJson, parseForm } from '../src/cli/parsers';
+import { parseBody } from '../src/cli/parsers';
 import { spinner } from '../src/cli/ui/spinner';
 import type { CLIOptions } from '../src/cli/types';
 import type { Method } from '../src/types';

@@ -85,3 +85,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Simplified Architecture**: The transition to `@glandjs/emitter` simplifies the event-driven architecture, making it more intuitive and efficient.
 - **Lean Build**: By eliminating unnecessary dependencies, the codebase is now leaner, facilitating easier debugging and faster development cycles.
+
+
+## [2.0.0] - 2025-11-12
+
+### Added
+
+#### CLI
+- Complete CLI rewrite with natural syntax
+- Table output format for array responses
+- Request history tracking
+- Save and replay requests
+- Configuration management (`agas config`)
+- Smart output formatting with syntax highlighting
+- Loading spinners and progress indicators
+- Multiple input formats (JSON, form, raw)
+- Beautiful, color-coded output
+- Output to file support
+
+#### API
+- Enhanced error handling
+- Full TypeScript types
+- Automatic response type detection
+- Request timing information
+- Flexible configuration options
+
+#### Infrastructure
+- Optimized Docker image (multi-stage build)
+- Better package structure
+- Comprehensive test suite
+- Complete documentation
+- CI/CD with GitHub Actions
+- Auto-publish to Docker Hub and NPM
+
+### Changed
+- **Breaking**: Removed `@method` syntax in favor of natural `method` syntax
+- **Breaking**: Changed package structure and exports
+- **Breaking**: Updated configuration format
+- Improved error messages with context
+- Better request/response formatting
+- Enhanced TypeScript definitions
+
+### Removed
+
+- Removed old event system
+- Removed deprecated options
+- Removed unnecessary dependencies

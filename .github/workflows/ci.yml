@@ -26,7 +26,7 @@ jobs:
         run: bun test
 
       - name: Build
-        run: bun run build:all
+        run: bun run build
 
   lint:
     runs-on: ubuntu-latest

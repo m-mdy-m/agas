@@ -4,9 +4,6 @@
   "description": "Agas is a minimal, HTTP client for the Terminal.",
   "type": "module",
   "main": "dist/index",
-  "bin":{
-    "agas":"dist/bin/agas.js"
-  },
   "files": ["dist","README.md","LICENSE"],
   "scripts": {
     "build": "bun build ./src/index.ts  --outdir ./dist --minify --format esm --target bun",

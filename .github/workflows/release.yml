@@ -179,7 +179,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build package
-        run: bun run build:all
+        run: bun run build
 
       - name: Publish to NPM
         run: npm publish

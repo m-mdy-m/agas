@@ -150,3 +150,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Safer response parsing and body serialization handling.
 * Corrected interceptor generics and several TypeScript signatures (e.g., `patch` return type).
 * Minor import/format fixes in `bin/agas.ts` and formatter modules.
+
+## [2.0.3] - 2025-11-13
+
+### Added
+* Add Intro Command with animation
+
+## Changed
+
+* Write better readme and UserGuide

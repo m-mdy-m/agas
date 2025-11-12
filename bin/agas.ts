@@ -1,361 +1,396 @@
 #!/usr/bin/env bun
-import { colors, spinner } from './color.util'
-import { Agas } from '../dist'
-import { RequestMethod } from '../src/common'
-
-const client = new Agas()
+import { parseArgs } from 'node:util';
+import { Agas } from '../src';
+import { formatResponse } from '../src/cli/formatters';
+import { loadConfig, saveConfig } from '../src/cli/utils/config';
+import { saveHistory, showHistory } from '../src/cli/utils/history';
+import { parseBody, parseHeaders, parseQuery, parseJson, parseForm } from '../src/cli/parsers';
+import { spinner } from '../src/cli/ui/spinner';
+import type { CLIOptions } from '../src/cli/types';
+import type { Method } from '../src/types';
+import {colors} from "../src/cli/formatters/colors"
 
 const LOGO = `
-╭──────╮ ╭────╮ ╭────╮ ╭────╮
-│  ▄▀▄ │ │ ▄▀▀│ │ ▄▀▀│ │ ▀▀▄│
-│  █ █ │ │ ▀▀▄│ │ ▀▀▄│ │ ▄▄▀│
-╰──────╯ ╰────╯ ╰────╯ ╰────╯
-         A G A S
-`
+${colors.cyan}     █████╗  ██████╗  █████╗ ███████╗
+    ██╔══██╗██╔════╝ ██╔══██╗██╔════╝
+    ███████║██║  ███╗███████║███████╗
+    ██╔══██║██║   ██║██╔══██║╚════██║
+    ██║  ██║╚██████╔╝██║  ██║███████║
+    ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝${colors.reset}
+    
+    Modern HTTP Client for the Terminal
+`;
 
-async function typeEffect(text: string, speed = 30): Promise<void> {
-  for (const char of text) {
-    process.stdout.write(char)
-    await new Promise((resolve) => setTimeout(resolve, speed))
-  }
-  process.stdout.write('\n')
-}
+async function main() {
+  const args = process.argv.slice(2);
 
-async function displayIntro(): Promise<void> {
-  console.clear()
-
-  console.log(colors.blue(LOGO))
-
-  await typeEffect(
-    colors.green('===============================================')
-  )
-  await typeEffect(
-    colors.green('|                                              |')
-  )
-  await typeEffect(
-    colors.green('|            Welcome to Agas CLI               |')
-  )
-  await typeEffect(
-    colors.green('|                                              |')
-  )
-  await typeEffect(
-    colors.green('===============================================')
-  )
-
-  await typeEffect(colors.cyan('Starting up...'))
-  await new Promise((resolve) => setTimeout(resolve, 400))
-
-  await typeEffect(
-    colors.yellow('Agas is a minimal HTTP client for the terminal.')
-  )
-  await typeEffect(colors.yellow('Built with Bun and TypeScript.'))
-
-  await typeEffect(colors.green('\nFeatures:'))
-  await typeEffect(colors.white('• Simple and readable syntax'))
-  await typeEffect(
-    colors.white('• Works well with JSON, FormData, and raw bodies')
-  )
-  await typeEffect(colors.white('• Event-driven by design'))
-
-  console.log('\n')
-  await typeEffect(colors.magenta('Type "agas --help" to get started'))
-  console.log('\n')
-}
-
-/**
- * Format and display HTTP response
- */
-function formatResponse(
-  method: string,
-  url: string,
-  headers: Record<string, string>,
-  requestBody: any,
-  response: any,
-  outputFormat: string = 'json',
-  verbose: boolean = false
-): void {
-  console.log(colors.blue('┌─────────────────────────────────────────┐'))
-  console.log(colors.blue('│ REQUEST DETAILS                         │'))
-  console.log(colors.blue('└─────────────────────────────────────────┘'))
-  console.log(colors.green(`Method:   ${method}`))
-  console.log(colors.green(`URL:      ${url}`))
-
-  if (verbose) {
-    console.log(colors.green('Headers:'))
-    for (const [key, value] of Object.entries(headers)) {
-      console.log(colors.green(`  ${key}: ${value}`))
-    }
-
-    if (requestBody) {
-      console.log(colors.green('Body:'))
-      console.log(
-        colors.green(
-          `  ${
-            typeof requestBody === 'object'
-              ? JSON.stringify(requestBody, null, 2)
-              : requestBody
-          }`
-        )
-      )
-    }
+  if (args.length === 0) {
+    showHelp();
+    process.exit(0);
   }
 
-  console.log('')
-  console.log(colors.blue('┌─────────────────────────────────────────┐'))
-  console.log(colors.blue('│ RESPONSE DETAILS                        │'))
-  console.log(colors.blue('└─────────────────────────────────────────┘'))
-  console.log(
-    colors.yellow(`Status:   ${response.status} ${response.statusText}`)
-  )
-  console.log(colors.yellow(`Time:     ${response.duration.toFixed(2)}ms`))
+  const command = args[0]!.toLowerCase();
 
-  if (verbose) {
-    console.log(colors.yellow('Headers:'))
-    for (const [key, value] of Object.entries(response.headers)) {
-      console.log(colors.yellow(`  ${key}: ${value}`))
-    }
+  // Handle special commands
+  if (command === 'help' || command === '--help' || command === '-h') {
+    showHelp();
+    process.exit(0);
   }
 
-  console.log('')
-  console.log(colors.blue('┌─────────────────────────────────────────┐'))
-  console.log(colors.blue('│ RESPONSE BODY                           │'))
-  console.log(colors.blue('└─────────────────────────────────────────┘'))
-
-  if (outputFormat === 'json' && typeof response.data === 'object') {
-    console.log(JSON.stringify(response.data, null, 2))
-  } else {
-    console.log(response.data)
-  }
-}
-
-/**
- * Parse command line arguments
- */
-function parseArgs() {
-  const args = process.argv.slice(2)
-
-  if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
-    showHelp()
-    process.exit(0)
+  if (command === 'version' || command === '--version' || command === '-v') {
+    console.log('agas version 2.0.0');
+    process.exit(0);
   }
 
-  if (args.includes('--version') || args.includes('-v')) {
-    console.log('Agas CLI v1.0.0')
-    process.exit(0)
+  if (command === 'config') {
+    await handleConfig(args.slice(1));
+    process.exit(0);
   }
 
-  if (args[0] === 'intro') {
-    displayIntro()
-    process.exit(0)
+  if (command === 'history') {
+    await showHistory();
+    process.exit(0);
   }
 
-  let method: RequestMethod
-  switch (args[0]) {
-    case '@get':
-      method = RequestMethod.GET
-      break
-    case '@post':
-      method = RequestMethod.POST
-      break
-    case '@put':
-      method = RequestMethod.PUT
-      break
-    case '@delete':
-      method = RequestMethod.DELETE
-      break
-    case '@patch':
-      method = RequestMethod.PATCH
-      break
-    default:
-      console.error(colors.red(`Unknown method: ${args[0]}`))
-      showHelp()
-      process.exit(1)
+  if (command === 'run') {
+    await handleRun(args[1]);
+    process.exit(0);
   }
 
-  const url = args[1]
+  // Handle HTTP methods
+  const validMethods: Method[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+  const method = command.toUpperCase() as Method;
+
+  if (!validMethods.includes(method)) {
+    console.error(`${colors.red}✗ Invalid command: ${command}${colors.reset}`);
+    console.log(`\nRun ${colors.cyan}agas help${colors.reset} for usage information`);
+    process.exit(1);
+  }
+
+  const url = args[1];
   if (!url) {
-    console.error(colors.red('URL is required'))
-    showHelp()
-    process.exit(1)
+    console.error(`${colors.red}✗ URL is required${colors.reset}`);
+    console.log(`\nUsage: agas ${method.toLowerCase()} <url> [options]`);
+    process.exit(1);
   }
 
-  const options: {
-    headers: Record<string, string>
-    data?: any
-    verbose: boolean
-    silent: boolean
-    format: string
-    params?: Record<string, any>
-  } = {
+  // Parse CLI options
+  const options = parseCliOptions(args.slice(2));
+
+  // Execute request
+  await executeRequest(method, url, options);
+}
+
+function parseCliOptions(args: string[]): CLIOptions {
+  const options: CLIOptions = {
     headers: {},
-    verbose: false,
-    silent: false,
-    format: 'json',
-  }
+    query: {},
+    json: {},
+    form: {},
+  };
 
-  for (let i = 2; i < args.length; i++) {
-    switch (args[i]) {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+
+    switch (arg) {
       case '-H':
       case '--header':
-        const headerParts = args[++i]!.split(':')
-        if (headerParts.length >= 2) {
-          const key = headerParts[0]!.trim()
-          const value = headerParts.slice(1).join(':').trim()
-          options.headers[key] = value
+        const header = args[++i];
+        if (header) {
+          const [key, ...valueParts] = header.split(':');
+          if (key && valueParts.length > 0) {
+            options.headers![key.trim()] = valueParts.join(':').trim();
+          }
         }
-        break
+        break;
+
+      case '-q':
+      case '--query':
+        const queryStr = args[++i];
+        if (queryStr) {
+          const [key, value] = queryStr.split('=');
+          if (key && value) {
+            options.query![key] = value;
+          }
+        }
+        break;
+
       case '-d':
       case '--data':
-        try {
-          options.data = JSON.parse(args[++i]!)
-        } catch (e) {
-          options.data = args[i]
+        options.data = args[++i];
+        break;
+
+      case '--json':
+        const jsonStr = args[++i];
+        if (jsonStr) {
+          const [key, value] = jsonStr.split('=');
+          if (key && value) {
+            options.json![key] = value;
+          }
         }
-        break
-      case '-t':
-      case '--type':
-        const contentType = args[++i]
-        switch (contentType) {
-          case 'json':
-            options.headers['Content-Type'] = 'application/json'
-            break
-          case 'html':
-            options.headers['Content-Type'] = 'text/html'
-            break
-          case 'text':
-            options.headers['Content-Type'] = 'text/plain'
-            break
-          default:
-            console.error(colors.red(`Unknown content type: ${contentType}`))
-            process.exit(1)
+        break;
+
+      case '--form':
+        const formStr = args[++i];
+        if (formStr) {
+          const [key, value] = formStr.split('=');
+          if (key && value) {
+            options.form![key] = value;
+          }
         }
-        break
-      case '-p':
-      case '--params':
-        try {
-          options.params = JSON.parse(args[++i]!)
-        } catch (e) {
-          console.error(colors.red(`Invalid params format: ${args[i]}`))
-          process.exit(1)
-        }
-        break
+        break;
+
+      case '-o':
+      case '--output':
+        options.output = args[++i];
+        break;
+
+      case '--pretty':
+        options.pretty = true;
+        break;
+
+      case '-v':
       case '--verbose':
-        options.verbose = true
-        break
+        options.verbose = true;
+        break;
+
       case '--silent':
-        options.silent = true
-        break
-      case '--format':
-        options.format = args[++i]!
-        break
+        options.silent = true;
+        break;
+
+      case '--follow':
+        options.follow = true;
+        break;
+
+      case '--timeout':
+        const timeout = parseInt(args[++i]!);
+        if (!isNaN(timeout)) {
+          options.timeout = timeout;
+        }
+        break;
+
+      case '--save':
+        options.save = args[++i];
+        break;
+
+      case '--table':
+        options.table = true;
+        break;
     }
   }
 
-  return { method, url, options }
+  return options;
 }
 
-/**
- * Display help information
- */
-function showHelp(): void {
-  console.log(colors.blue(LOGO))
-  console.log(colors.yellow('Agas CLI - Modern HTTP Client'))
-  console.log(colors.yellow('Usage:'))
-  console.log('  agas @<method> <url> [options]')
-  console.log('')
-  console.log(colors.yellow('Methods:'))
-  console.log('  @get     - GET request')
-  console.log('  @post    - POST request')
-  console.log('  @put     - PUT request')
-  console.log('  @delete  - DELETE request')
-  console.log('  @patch   - PATCH request')
-  console.log('')
-  console.log(colors.yellow('Options:'))
-  console.log('  -H, --header <key:value>  - Add request header')
-  console.log('  -d, --data <data>         - Request body data')
-  console.log('  -t, --type <type>         - Content type (json, html, text)')
-  console.log('  -p, --params <json>       - URL parameters as JSON')
-  console.log('  --verbose                 - Show detailed output')
-  console.log('  --silent                  - Show only response body')
-  console.log('  --format <format>         - Output format (json, raw)')
-  console.log('  --help                    - Show this help')
-  console.log('  --version                 - Show version')
-  console.log('')
-  console.log(colors.yellow('Examples:'))
-  console.log('  agas @get https://api.example.com/users')
-  console.log(
-    '  agas @post https://api.example.com/users -d \'{"name":"John"}\''
-  )
-  console.log(
-    '  agas @get https://api.example.com/users -H "Authorization: Bearer token"'
-  )
-  console.log('')
-}
+async function executeRequest(method: Method, url: string, options: CLIOptions) {
+  const config = await loadConfig();
+  const client = new Agas({
+    baseURL: config.baseURL,
+    timeout: options.timeout || config.timeout || 30000,
+    headers: { ...config.defaultHeaders, ...options.headers },
+  });
 
-/**
- * Main function
- */
-async function main() {
-  if (process.argv.length === 2) {
-    await displayIntro()
-    process.exit(0)
+  // Prepare request body
+  let data: any = undefined;
+  if (options.data) {
+    data = parseBody(options.data);
+  } else if (Object.keys(options.json!).length > 0) {
+    data = options.json;
+  } else if (Object.keys(options.form!).length > 0) {
+    data = new URLSearchParams(options.form as Record<string, string>);
   }
 
-  const { method, url, options } = parseArgs()
-
-  if (options.silent) {
-    const response = await client.request(url, {
-      method,
-      headers: options.headers,
-      body: options.data,
-      params: options.params,
-    })
-
-    console.log(
-      typeof response.data === 'object'
-        ? JSON.stringify(response.data)
-        : response.data
-    )
-
-    process.exit(0)
+  // Start spinner
+  const spin = spinner(`${method} ${url}`);
+  if (!options.silent) {
+    spin.start();
   }
 
-  const loadingSpinner = spinner('Sending request')
-  loadingSpinner.start()
+  const startTime = Date.now();
 
   try {
-    const response = await client.request(url, {
-      method,
-      headers: options.headers,
-      body: options.data,
-      params: options.params,
-    })
-
-    loadingSpinner.succeed('Request successful')
-
-    formatResponse(
+    const response = await client.request({
       method,
       url,
-      options.headers,
-      options.data,
-      response,
-      options.format,
-      options.verbose
-    )
-  } catch (error: any) {
-    loadingSpinner.fail('Request failed')
-    console.error(colors.red(`Error: ${error.message}`))
-    if (error.context) {
-      console.error(colors.red(`Request ID: ${error.context.requestId}`))
-      console.error(colors.red(`URL: ${error.context.url}`))
-      console.error(colors.red(`Method: ${error.context.method}`))
+      params: options.query,
+      data,
+      headers: options.headers,
+    });
+
+    const duration = Date.now() - startTime;
+
+    if (!options.silent) {
+      spin.succeed(`${method} ${url} (${duration}ms)`);
     }
-    process.exit(1)
+
+    // Format and display response
+    if (options.silent) {
+      // Silent mode: only output body
+      if (typeof response.data === 'string') {
+        console.log(response.data);
+      } else {
+        console.log(JSON.stringify(response.data));
+      }
+    } else {
+      await formatResponse(response, {
+        colors: !process.env.NO_COLOR,
+        verbose: options.verbose,
+        pretty: options.pretty,
+        table: options.table,
+      });
+    }
+
+    // Save to history
+    if (config.saveHistory !== false) {
+      await saveHistory({
+        id: response.id,
+        method,
+        url,
+        status: response.status,
+        duration,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Save request if requested
+    if (options.save) {
+      // Implementation for saving request
+    }
+
+    // Save to file
+    if (options.output) {
+      const content = typeof response.data === 'string' 
+        ? response.data 
+        : JSON.stringify(response.data, null, 2);
+      await Bun.write(options.output, content);
+      console.log(`\n${colors.green}✓ Saved to ${options.output}${colors.reset}`);
+    }
+
+    process.exit(0);
+  } catch (error: any) {
+    console.log("ERRROROR:",error)
+    const duration = Date.now() - startTime;
+
+    if (!options.silent) {
+      spin.fail(`${method} ${url} (${duration}ms)`);
+    }
+
+    console.error(`\n${colors.red}✗ Error: ${error.message}${colors.reset}`);
+
+    if (error.response) {
+      console.error(`\nStatus: ${error.response.status} ${error.response.statusText}`);
+      if (error.response.data) {
+        console.error(`\nResponse:`);
+        console.error(JSON.stringify(error.response.data, null, 2));
+      }
+    }
+
+    if (options.verbose && error.config) {
+      console.error(`\nRequest details:`);
+      console.error(`  URL: ${error.config.url}`);
+      console.error(`  Method: ${error.config.method}`);
+      if (error.config.headers) {
+        console.error(`  Headers:`, error.config.headers);
+      }
+    }
+
+    process.exit(1);
   }
 }
 
-// Run the CLI
+async function handleConfig(args: string[]) {
+  const action = args[0];
+  
+  if (action === 'set') {
+    const key = args[1];
+    const value = args[2];
+    
+    if (!key || !value) {
+      console.error(`${colors.red}✗ Usage: agas config set <key> <value>${colors.reset}`);
+      process.exit(1);
+    }
+
+    const config = await loadConfig();
+    (config as any)[key] = value;
+    await saveConfig(config);
+    
+    console.log(`${colors.green}✓ Config updated: ${key} = ${value}${colors.reset}`);
+  } else if (action === 'get') {
+    const key = args[1];
+    const config = await loadConfig();
+    
+    if (key) {
+      console.log((config as any)[key] || '');
+    } else {
+      console.log(JSON.stringify(config, null, 2));
+    }
+  } else if (action === 'list') {
+    const config = await loadConfig();
+    console.log('\nCurrent configuration:');
+    console.log(JSON.stringify(config, null, 2));
+  } else {
+    console.log('\nConfig commands:');
+    console.log('  agas config set <key> <value>  - Set config value');
+    console.log('  agas config get [key]          - Get config value');
+    console.log('  agas config list               - List all config');
+  }
+}
+
+async function handleRun(name: string | undefined) {
+  if (!name) {
+    console.error(`${colors.red}✗ Request name is required${colors.reset}`);
+    process.exit(1);
+  }
+
+  console.log(`Running saved request: ${name}`);
+}
+
+function showHelp() {
+  console.log(LOGO);
+  console.log(`${colors.bright}USAGE${colors.reset}`);
+  console.log('  agas <method> <url> [options]\n');
+
+  console.log(`${colors.bright}METHODS${colors.reset}`);
+  console.log('  get, post, put, delete, patch, head, options\n');
+
+  console.log(`${colors.bright}OPTIONS${colors.reset}`);
+  console.log('  -H, --header <key:value>    Add request header');
+  console.log('  -q, --query <key=value>     Add query parameter');
+  console.log('  -d, --data <data>           Request body data');
+  console.log('  --json <key=value>          Add JSON field');
+  console.log('  --form <key=value>          Add form field');
+  console.log('  -o, --output <file>         Save response to file');
+  console.log('  --pretty                    Pretty print response');
+  console.log('  -v, --verbose               Verbose output');
+  console.log('  --silent                    Only output response body');
+  console.log('  --follow                    Follow redirects');
+  console.log('  --timeout <ms>              Request timeout');
+  console.log('  --save <name>               Save request for later');
+  console.log('  --table                     Display as table\n');
+
+  console.log(`${colors.bright}COMMANDS${colors.reset}`);
+  console.log('  config set <key> <value>    Set config value');
+  console.log('  config get [key]            Get config value');
+  console.log('  config list                 List all config');
+  console.log('  history                     Show request history');
+  console.log('  run <name>                  Run saved request\n');
+
+  console.log(`${colors.bright}EXAMPLES${colors.reset}`);
+  console.log('  agas get https://api.example.com');
+  console.log('  agas post https://api.example.com --json name=John');
+  console.log('  agas get https://api.example.com -q page=1 -q limit=10');
+  console.log('  agas post https://api.example.com -d \'{"name":"John"}\'');
+  console.log('  agas get https://api.example.com -H "Authorization: Bearer token"');
+  console.log('  agas get https://api.example.com --pretty --table\n');
+
+  console.log(`${colors.bright}MORE INFO${colors.reset}`);
+  console.log('  Documentation: https://github.com/m-mdy-m/agas');
+  console.log('  Issues: https://github.com/m-mdy-m/agas/issues\n');
+}
+
+// Run CLI
 main().catch((error) => {
-  console.error(colors.red(`Unexpected error: ${error.message}`))
-  process.exit(1)
-})
+  console.log("ERROR:",error)
+  console.error(`${colors.red}Unexpected error: ${error.message}${colors.reset}`);
+  process.exit(1);
+});

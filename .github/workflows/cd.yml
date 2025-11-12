@@ -8,6 +8,45 @@ on:
   workflow_dispatch:
 
 jobs:
+  create-release:
+    name: Create GitHub Release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: binaries
+          path: ./binaries
+
+      - name: Create checksums file
+        run: |
+          cd binaries
+          cat *.sha256 > checksums.txt
+          rm *.sha256
+
+      - name: Extract release notes
+        id: extract_notes
+        run: |
+          VERSION="${{ github.ref_name }}"
+          sed -n "/## \[${VERSION#v}\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          body_path: release_notes.md
+          files: binaries/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   build-binaries:
     name: Build Binaries
     runs-on: ${{ matrix.os }}
@@ -80,51 +119,12 @@ jobs:
           Compress-Archive -Path agas-${{ matrix.target }}${{ matrix.ext }} -DestinationPath agas-${{ github.ref_name }}-${{ matrix.target }}.zip
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: binaries
           path: |
             agas-${{ github.ref_name }}-${{ matrix.target }}.*
             agas-${{ matrix.target }}.sha256
-  create-release:
-    name: Create GitHub Release
-    needs: build-binaries
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: binaries
-          path: ./binaries
-
-      - name: Create checksums file
-        run: |
-          cd binaries
-          cat *.sha256 > checksums.txt
-          rm *.sha256
-
-      - name: Extract release notes
-        id: extract_notes
-        run: |
-          VERSION="${{ github.ref_name }}"
-          sed -n "/## \[${VERSION#v}\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Release ${{ github.ref_name }}
-          body_path: release_notes.md
-          files: binaries/*
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   publish-docker:
     name: Publish Docker Image
     needs: create-release

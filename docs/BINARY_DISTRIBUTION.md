@@ -132,50 +132,6 @@ sudo rm /usr/local/bin/agas
 ```powershell
 Remove-Item "$env:LOCALAPPDATA\agas\agas.exe"
 ```
-
-## Releasing
-
-### Automated (Recommended)
-
-1. Tag release:
-```bash
-git tag v2.0.0
-git push origin v2.0.0
-```
-
-2. GitHub Actions automatically:
-   - Builds binaries
-   - Creates release
-   - Uploads binaries
-   - Publishes to NPM
-   - Publishes to Docker
-
-### Manual
-
-1. Build binaries:
-```bash
-make build-binary
-```
-
-2. Package:
-```bash
-make package
-```
-
-3. Create GitHub release:
-```bash
-gh release create v2.0.0 dist/binaries/*
-```
-
-## Binary Sizes
-
-Typical sizes:
-- Linux x64: ~45 MB
-- macOS arm64: ~40 MB
-- Windows x64: ~50 MB
-
-Note: Sizes include Bun runtime and all dependencies.
-
 ## Troubleshooting
 
 ### "Permission denied"
@@ -201,9 +157,3 @@ Right-click → Properties → Unblock
 5. **Scoop** (Coming): `scoop install agas`
 6. **Chocolatey** (Coming): `choco install agas`
 
-## Security
-
-- All binaries signed with SHA256
-- Checksums provided for verification
-- HTTPS downloads only
-- No telemetry or tracking

@@ -5,6 +5,7 @@ on:
     branches: [main,develop]
     tags:
       - 'v*.*.*'
+
 permissions:
   contents: write
   packages: write
@@ -137,6 +138,7 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body_path: release_notes.md
           files: binaries/*

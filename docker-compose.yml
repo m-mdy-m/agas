@@ -1,16 +1,23 @@
-version: '3.8' #
+version: '3.8'
+
 services:
   agas:
     build:
       context: .
       dockerfile: Dockerfile
-    image: mmdy/agas:latest
-    container_name: agas_cli
-    entrypoint: ['agas']
-    command: ['--help']
-    tty: true
-    stdin_open: true
-    environment:
-      - BUN_INSTALL=/usr/local/bin/bun
+    image: bitsgenix/agas:latest
+    container_name: agas
     volumes:
-      - .:/app:ro
+      - ~/.agas:/home/agas/.agas:rw
+    environment:
+      - AGAS_BASE_URL=${AGAS_BASE_URL:-}
+      - AGAS_AUTH_TOKEN=${AGAS_AUTH_TOKEN:-}
+      - AGAS_TIMEOUT=${AGAS_TIMEOUT:-30000}
+    networks:
+      - agas-network
+    stdin_open: true
+    tty: true
+
+networks:
+  agas-network:
+    driver: bridge

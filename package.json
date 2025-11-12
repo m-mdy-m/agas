@@ -1,27 +1,32 @@
 {
   "name": "@medishn/agas",
-  "version": "1.0.0",
-  "description": "Agas is a minimal, CLI-friendly HTTP client powered by Bun,",
+  "version": "2.0.0",
+  "description": "Agas is a minimal, HTTP client for the Terminal.",
   "type": "module",
-  "module": "dist/index",
-  "files": ["dist/"],
+  "main": "dist/index",
+  "bin":{
+    "agas":"dist/bin/agas.js"
+  },
+  "files": ["dist","README.md","LICENSE"],
   "scripts": {
     "build": "bun build ./src/index.ts  --outdir ./dist --minify --format esm --target bun",
-    "test": "bun test ./test/*",
+    "build:cli": "bun build ./bin/agas.ts --outfile ./dist/bin/agas.js --minify --format esm --target bun",
+    "build:all":"bun run build && bun run build:cli",
+    "test": "bun test ./tests/*",
+    "test:integration":"bun test ./tests/integration*",
     "clean": "rm -rf dist",
-    "build:cli": "bun build ./bin/agas.ts --outdir ./dist/bin --minify --format esm --target bun",
     "dev": "bun run ./bin/agas",
     "release": "npm publish",
-    "docekr:build": "docker-compose build",
-    "docker:run": "docker-compose run --rm agas @get https://httpbin.org/get",
-    "npm:test": "npm pack"
+    "docker:build": "docker build -t bitsgenix/agas:latest .",
+    "docker:run": "docker run --rm bitsgenix/agas",
+    "docker:publish": "docker push bitsgenix/agas:latest",
+    "npm:pack": "npm pack",
+    "build:binary": "bun run scripts/build-binary.ts",
+    "package:binaries": "bun run scripts/package-binaries.ts",
+    "release:binaries": "bun run build:binary && bun run package:binaries"
   },
-  "sideEffects": false,
   "engines": {
     "bun": ">=1.0.0"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -40,11 +45,31 @@
     "url": "https://github.com/m-mdy-m/agas/issues"
   },
   "homepage": "https://github.com/m-mdy-m/agas#readme",
-  "keywords": ["http-client", "bun", "cli", "request", "events", "broker", "glandjs"],
-  "author": "Mahdi <bitsgenix@gmail.com>",
+  "keywords": [
+    "http",
+    "client",
+    "cli",
+    "rest",
+    "api",
+    "request",
+    "fetch",
+    "curl",
+    "httpie",
+    "terminal",
+    "bun"
+  ],
+  "author": {
+    "name": "Mahdi",
+    "email": "bitsgenix@gmail.com",
+    "url": "https://github.com/m-mdy-m"
+  },
   "license": "MIT",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/m-mdy-m"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

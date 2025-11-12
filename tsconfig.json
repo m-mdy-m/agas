@@ -1,39 +1,50 @@
 {
-  "compilerOptions": {
-    "lib": ["ESNext"],
+    "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleDetection": "force",
+    "lib": ["ESNext"],
     "moduleResolution": "bundler",
+    "moduleDetection": "force",
 
-    "allowJs": true,
-    "verbatimModuleSyntax": true,
-
-    "noEmit": false,
-    "outDir": ".",
-    "declaration": true,
-    "declarationMap": false,
-    "emitDeclarationOnly": false,
-
-    "sourceMap": false,
-    "strictNullChecks": true,
-    "incremental": false,
-    "rootDirs": ["src", "cli", "bin"],
-    "baseUrl": ".",
+    "outDir": "dist",
     "rootDir": ".",
+    "baseUrl": ".",
+
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+
     "strict": true,
-    "useUnknownInCatchVariables": true,
-    "skipLibCheck": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
 
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
 
-    "resolveJsonModule": true,
     "esModuleInterop": true,
-    "isolatedModules": true
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+
+    "types": ["bun-types"]
   },
-  "include": ["src", "cli", "bin", "tests"],
-  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+  "include": [
+    "src/**/*",
+    "bin/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
 }

@@ -1,13 +1,20 @@
 #!/usr/bin/env bun
 import { Agas } from '../src';
-import { formatResponse} from '../src/cli/formatters';
+import { formatResponse } from '../src/cli/formatters';
 import { loadConfig, saveConfig } from '../src/cli/utils/config';
-import { saveHistory, showHistory } from '../src/cli/utils/history';
+import { saveHistory, showHistory, clearHistory } from '../src/cli/utils/history';
+import { 
+  saveRequest, 
+  loadRequest, 
+  listRequests, 
+  deleteRequest 
+} from '../src/cli/utils/saved-request';
 import { parseBody } from '../src/cli/parsers';
-import { spinner } from '../src/cli/ui/spinner';
-import type { CLIOptions } from '../src/cli/types';
+import { spinner ,showIntro} from '../src/cli/ui';
+import type { CLIOptions, SavedRequest } from '../src/cli/types';
 import type { Method } from '../src/types';
-import {colors} from "../src/cli/formatters/colors"
+import { colors } from "../src/cli/formatters/colors";
+import pkg from "../package.json";
 
 const LOGO = `
 ${colors.cyan}     █████╗  ██████╗  █████╗ ███████╗
@@ -18,36 +25,50 @@ ${colors.cyan}     █████╗  ██████╗  █████╗
     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝${colors.reset}
     
     Modern HTTP Client for the Terminal
+    Version ${pkg.version}
 `;
 
 async function main() {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
-    showHelp();
+    await showIntro();
     process.exit(0);
   }
 
   const command = args[0]!.toLowerCase();
 
-  // Handle special commands
+  // Version flag
+  if (command === '--version' || command === '-v') {
+    console.log(`agas version ${pkg.version}`);
+    process.exit(0);
+  }
+
+  // Help flag
   if (command === 'help' || command === '--help' || command === '-h') {
     showHelp();
     process.exit(0);
   }
 
-  if (command === 'version' || command === '--version' || command === '-v') {
-    console.log('agas version 2.0.0');
-    process.exit(0);
-  }
-
+  // Config management
   if (command === 'config') {
     await handleConfig(args.slice(1));
     process.exit(0);
   }
 
+  // History management
   if (command === 'history') {
-    await showHistory();
+    if (args[1] === 'clear') {
+      await clearHistory();
+    } else {
+      await showHistory();
+    }
+    process.exit(0);
+  }
+
+  // Saved requests management
+  if (command === 'requests') {
+    await handleRequests(args.slice(1));
     process.exit(0);
   }
 
@@ -56,27 +77,30 @@ async function main() {
     process.exit(0);
   }
 
-  // Handle HTTP methods
+  // Check for URL as first argument (shorthand GET)
+  if (command.startsWith('http://') || command.startsWith('https://')) {
+    await executeRequest('GET', command, parseCliOptions(args.slice(1)));
+    process.exit(0);
+  }
+
+  // HTTP methods
   const validMethods: Method[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
   const method = command.toUpperCase() as Method;
 
   if (!validMethods.includes(method)) {
-    console.error(`${colors.red}✗ Invalid command: ${command}${colors.reset}`);
+    console.error(`${colors.red}Invalid command: ${command}${colors.reset}`);
     console.log(`\nRun ${colors.cyan}agas help${colors.reset} for usage information`);
     process.exit(1);
   }
 
   const url = args[1];
   if (!url) {
-    console.error(`${colors.red}✗ URL is required${colors.reset}`);
+    console.error(`${colors.red}URL is required${colors.reset}`);
     console.log(`\nUsage: agas ${method.toLowerCase()} <url> [options]`);
     process.exit(1);
   }
 
-  // Parse CLI options
   const options = parseCliOptions(args.slice(2));
-
-  // Execute request
   await executeRequest(method, url, options);
 }
 
@@ -189,7 +213,6 @@ async function executeRequest(method: Method, url: string, options: CLIOptions) 
     headers: { ...config.defaultHeaders, ...options.headers },
   });
 
-  // Prepare request body
   let data: any = undefined;
   if (options.data) {
     data = parseBody(options.data);
@@ -199,7 +222,6 @@ async function executeRequest(method: Method, url: string, options: CLIOptions) 
     data = new URLSearchParams(options.form as Record<string, string>);
   }
 
-  // Start spinner
   const spin = spinner(`${method} ${url}`);
   if (!options.silent) {
     spin.start();
@@ -222,9 +244,7 @@ async function executeRequest(method: Method, url: string, options: CLIOptions) 
       spin.succeed(`${method} ${url} (${duration}ms)`);
     }
 
-    // Format and display response
     if (options.silent) {
-      // Silent mode: only output body
       if (typeof response.data === 'string') {
         console.log(response.data);
       } else {
@@ -239,7 +259,6 @@ async function executeRequest(method: Method, url: string, options: CLIOptions) 
       });
     }
 
-    // Save to history
     if (config.saveHistory !== false) {
       await saveHistory({
         id: response.id,
@@ -251,30 +270,36 @@ async function executeRequest(method: Method, url: string, options: CLIOptions) 
       });
     }
 
-    // Save request if requested
     if (options.save) {
-      // Implementation for saving request
+      const savedRequest: SavedRequest = {
+        name: options.save,
+        method,
+        url,
+        headers: options.headers,
+        data,
+        params: options.query,
+        createdAt: new Date().toISOString(),
+      };
+      await saveRequest(savedRequest);
     }
 
-    // Save to file
     if (options.output) {
       const content = typeof response.data === 'string' 
         ? response.data 
         : JSON.stringify(response.data, null, 2);
       await Bun.write(options.output, content);
-      console.log(`\n${colors.green}✓ Saved to ${options.output}${colors.reset}`);
+      console.log(`\n${colors.green}Saved to ${options.output}${colors.reset}`);
     }
 
     process.exit(0);
   } catch (error: any) {
-    console.log("ERRROROR:",error)
     const duration = Date.now() - startTime;
 
     if (!options.silent) {
       spin.fail(`${method} ${url} (${duration}ms)`);
     }
 
-    console.error(`\n${colors.red}✗ Error: ${error.message}${colors.reset}`);
+    console.error(`\n${colors.red}Error: ${error.message}${colors.reset}`);
 
     if (error.response) {
       console.error(`\nStatus: ${error.response.status} ${error.response.statusText}`);
@@ -305,7 +330,7 @@ async function handleConfig(args: string[]) {
     const value = args[2];
     
     if (!key || !value) {
-      console.error(`${colors.red}✗ Usage: agas config set <key> <value>${colors.reset}`);
+      console.error(`${colors.red}Usage: agas config set <key> <value>${colors.reset}`);
       process.exit(1);
     }
 
@@ -313,7 +338,7 @@ async function handleConfig(args: string[]) {
     (config as any)[key] = value;
     await saveConfig(config);
     
-    console.log(`${colors.green}✓ Config updated: ${key} = ${value}${colors.reset}`);
+    console.log(`${colors.green}Config updated: ${key} = ${value}${colors.reset}`);
   } else if (action === 'get') {
     const key = args[1];
     const config = await loadConfig();
@@ -335,19 +360,53 @@ async function handleConfig(args: string[]) {
   }
 }
 
+async function handleRequests(args: string[]) {
+  const action = args[0];
+  
+  if (action === 'list' || !action) {
+    await listRequests();
+  } else if (action === 'delete') {
+    const name = args[1];
+    if (!name) {
+      console.error(`${colors.red}Request name is required${colors.reset}`);
+      process.exit(1);
+    }
+    await deleteRequest(name);
+  } else {
+    console.log('\nRequests commands:');
+    console.log('  agas requests list    - List all saved requests');
+    console.log('  agas requests delete  - Delete a saved request');
+  }
+}
+
 async function handleRun(name: string | undefined) {
   if (!name) {
-    console.error(`${colors.red}✗ Request name is required${colors.reset}`);
+    console.error(`${colors.red}Request name is required${colors.reset}`);
     process.exit(1);
   }
 
-  console.log(`Running saved request: ${name}`);
+  const savedRequest = await loadRequest(name);
+  if (!savedRequest) {
+    console.error(`${colors.red}Request not found: ${name}${colors.reset}`);
+    process.exit(1);
+  }
+
+  console.log(`${colors.cyan}Running saved request: ${name}${colors.reset}\n`);
+
+  const options: CLIOptions = {
+    headers: savedRequest.headers,
+    query: savedRequest.params,
+    data: savedRequest.data ? JSON.stringify(savedRequest.data) : undefined,
+  };
+
+  await executeRequest(savedRequest.method, savedRequest.url, options);
 }
 
 function showHelp() {
   console.log(LOGO);
   console.log(`${colors.bright}USAGE${colors.reset}`);
-  console.log('  agas <method> <url> [options]\n');
+  console.log('  agas <method> <url> [options]');
+  console.log('  agas <url> [options]           (defaults to GET)\n');
 
   console.log(`${colors.bright}METHODS${colors.reset}`);
   console.log('  get, post, put, delete, patch, head, options\n');
@@ -372,24 +431,30 @@ function showHelp() {
   console.log('  config get [key]            Get config value');
   console.log('  config list                 List all config');
   console.log('  history                     Show request history');
-  console.log('  run <name>                  Run saved request\n');
+  console.log('  history clear               Clear request history');
+  console.log('  requests list               List saved requests');
+  console.log('  requests delete <name>      Delete saved request');
+  console.log('  run <name>                  Run saved request');
+  console.log('  --version, -v               Show version');
+  console.log('  help, --help, -h            Show this help\n');
 
   console.log(`${colors.bright}EXAMPLES${colors.reset}`);
+  console.log('  agas https://api.example.com');
   console.log('  agas get https://api.example.com');
   console.log('  agas post https://api.example.com --json name=John');
   console.log('  agas get https://api.example.com -q page=1 -q limit=10');
   console.log('  agas post https://api.example.com -d \'{"name":"John"}\'');
   console.log('  agas get https://api.example.com -H "Authorization: Bearer token"');
-  console.log('  agas get https://api.example.com --pretty --table\n');
+  console.log('  agas get https://api.example.com --pretty --table');
+  console.log('  agas post https://api.example.com --json name=John --save create-user');
+  console.log('  agas run create-user\n');
 
   console.log(`${colors.bright}MORE INFO${colors.reset}`);
   console.log('  Documentation: https://github.com/m-mdy-m/agas');
   console.log('  Issues: https://github.com/m-mdy-m/agas/issues\n');
 }
 
-// Run CLI
 main().catch((error) => {
-  console.log("ERROR:",error)
   console.error(`${colors.red}Unexpected error: ${error.message}${colors.reset}`);
   process.exit(1);
 });

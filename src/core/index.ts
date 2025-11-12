@@ -1,5 +1,5 @@
 import { EventEmitter } from "@glandjs/emitter"
-import {AgasConfig,InterceptorManager,RequestConfig,ResponseConfig,Interceptor,TResponse} from "../types"
+import {AgasConfig,InterceptorManager,RequestConfig,ResponseConfig,Interceptor,} from "../types"
 export class Agas {
     private config!:AgasConfig;
     private emitter = new EventEmitter()
@@ -50,7 +50,7 @@ export class Agas {
         const response = await fetch(url, {
           method: finalConfig?.method,
           headers: finalConfig?.headers,
-          body: this.serializeBody(finalConfig?.data, finalConfig?.headers),
+          body: this.serializeBody(finalConfig?.data, finalConfig?.headers!),
           signal: controller.signal,
           redirect: 'follow',
           credentials: finalConfig?.credentials,

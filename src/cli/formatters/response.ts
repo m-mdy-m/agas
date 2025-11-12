@@ -13,7 +13,6 @@ export async function formatResponse(response: ResponseConfig, options: FormatOp
   } = options;
   const c = useColors ? colors : noColors();
 
-  console.log('');
   const statusColor = getStatusColor(response.status, c);
   const statusIcon = response.status >= 200 && response.status < 300 ? '✓' : '✗';
   console.log(`${statusColor}${statusIcon} Status: ${response.status} ${response.statusText}${c.reset}`);

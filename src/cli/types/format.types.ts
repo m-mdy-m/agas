@@ -1,6 +1,9 @@
 export interface FormatOptions {
   colors?: boolean;
   indent?: number;
+  verbose?: boolean;
+  pretty?: boolean;
+  table?: boolean;
   maxLength?: number;
   showHeaders?: boolean;
   showBody?: boolean;
